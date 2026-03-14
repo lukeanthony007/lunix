@@ -2,6 +2,7 @@
 {
   home.packages = with pkgs; [
     firefox
+    git
     wl-clipboard
   ];
 
@@ -91,6 +92,35 @@
 
   programs.dsearch = {
     enable = true;
+  };
+
+  home.activation.cloneWallpapers = inputs.home-manager.lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if [ ! -d "$HOME/Pictures/Wallpapers/.git" ]; then
+      ${pkgs.git}/bin/git clone https://github.com/lukeanthony007/Wallpapers.git "$HOME/Pictures/Wallpapers" || true
+    fi
+  '';
+
+  systemd.user.services.random-wallpaper = let
+    script = pkgs.writeShellScript "random-wallpaper" ''
+      dir="$HOME/Pictures/Wallpapers"
+      [ -d "$dir" ] || exit 0
+      wallpaper=$(${pkgs.findutils}/bin/find "$dir" -type f \( -name '*.jpg' -o -name '*.png' -o -name '*.avif' -o -name '*.webp' \) | ${pkgs.coreutils}/bin/shuf -n 1)
+      [ -n "$wallpaper" ] || exit 0
+      exec dms ipc wallpaper set "$wallpaper"
+    '';
+  in {
+    Unit = {
+      After = ["dms.service"];
+      Description = "Set random wallpaper via DMS on session start";
+    };
+
+    Install.WantedBy = ["dms.service"];
+
+    Service = {
+      Type = "oneshot";
+      ExecStartPre = "${pkgs.coreutils}/bin/sleep 5";
+      ExecStart = "${script}";
+    };
   };
 
   systemd.user.services.foot-autostart = {
