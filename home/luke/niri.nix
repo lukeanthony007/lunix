@@ -1,12 +1,25 @@
 { inputs, pkgs, ... }:
 {
   home.packages = with pkgs; [
-    firefox
+    discord
     foot
     git
+    inputs.zen-browser.packages.${pkgs.system}.default
+    gnome-text-editor
+    nautilus
     nerd-fonts.jetbrains-mono
+    pavucontrol
+    retroarch
+    spotify
+    starship
+    vscode
     wl-clipboard
   ];
+
+  xdg.userDirs = {
+    enable = true;
+    createDirectories = true;
+  };
 
   home.pointerCursor = {
     name = "Adwaita";
@@ -31,8 +44,34 @@
     enable = true;
     interactiveShellInit = ''
       set fish_greeting
+      starship init fish | source
     '';
   };
+
+  xdg.configFile."starship.toml".source = ./starship.toml;
+
+  xdg.configFile."nvim/lua/plugins/transparent.lua".text = ''
+    return {
+      {
+        "xiyaowong/transparent.nvim",
+        lazy = false,
+        config = function()
+          require("transparent").setup({
+            extra_groups = { "StatusLine", "StatusLineNC" },
+          })
+          require("transparent").toggle(true)
+          local function fix_stl()
+            vim.api.nvim_set_hl(0, "StatusLine", { link = "Normal" })
+            vim.api.nvim_set_hl(0, "StatusLineNC", { link = "Normal" })
+          end
+          vim.defer_fn(fix_stl, 1000)
+          vim.api.nvim_create_autocmd({"BufEnter", "ColorScheme"}, {
+            callback = function() vim.defer_fn(fix_stl, 100) end,
+          })
+        end,
+      },
+    }
+  '';
 
   xdg.configFile."foot/foot.ini".text = ''
     include=/home/luke/.config/foot/dank-colors.ini
@@ -72,6 +111,10 @@
 
     [text-bindings]
     \x03=Control+Shift+c
+
+    [colors-dark]
+    background=000000
+    alpha=0.85
   '';
 
   programs.niri.settings = {
@@ -99,14 +142,17 @@
 
     window-rules = [
       {
+        geometry-corner-radius = let r = 12.0; in { bottom-left = r; bottom-right = r; top-left = r; top-right = r; };
+        clip-to-geometry = true;
+      }
+      {
         matches = [{ app-id = "^foot$"; }];
-        opacity = 0.75;
+        opacity = 0.95;
         draw-border-with-background = false;
         default-column-width.proportion = 1.0;
       }
       {
         matches = [{ app-id = "^org\\.gnome\\.Nautilus$"; }];
-        opacity = 0.75;
       }
       {
         matches = [{ app-id = "^[Cc]ode$"; }];
@@ -203,8 +249,26 @@
     enable = true;
   };
 
+  systemd.user.services.clone-nvchad = {
+    Unit = {
+      Wants = ["network-online.target"];
+      After = ["network-online.target"];
+      Description = "Clone NvChad config if missing";
+    };
+
+    Install.WantedBy = ["default.target"];
+
+    Service = {
+      Type = "oneshot";
+      Restart = "on-failure";
+      RestartSec = 5;
+      ExecStart = "${pkgs.bash}/bin/bash -c 'if [ ! -d $HOME/.config/nvim/.git ]; then rm -rf $HOME/.config/nvim; ${pkgs.git}/bin/git clone --depth 1 https://github.com/NvChad/starter $HOME/.config/nvim; fi'";
+    };
+  };
+
   systemd.user.services.clone-wallpapers = {
     Unit = {
+      Wants = ["network-online.target"];
       After = ["network-online.target"];
       Description = "Clone wallpapers repo if missing";
     };
@@ -213,6 +277,8 @@
 
     Service = {
       Type = "oneshot";
+      Restart = "on-failure";
+      RestartSec = 5;
       ExecStart = "${pkgs.bash}/bin/bash -c 'if [ ! -d $HOME/Pictures/Wallpapers/.git ]; then rm -rf $HOME/Pictures/Wallpapers; ${pkgs.git}/bin/git clone --depth 1 https://github.com/lukeanthony007/Wallpapers.git $HOME/Pictures/Wallpapers; fi'";
     };
   };
@@ -223,26 +289,34 @@
       [ -d "$dir" ] || exit 0
       wallpaper=$(${pkgs.findutils}/bin/find "$dir" -type f -size +100k \( -name '*.jpg' -o -name '*.png' -o -name '*.avif' -o -name '*.webp' \) | ${pkgs.coreutils}/bin/shuf -n 1)
       [ -n "$wallpaper" ] || exit 0
-      exec dms ipc wallpaper set "$wallpaper"
+
+      # Write wallpaper to DMS session.json before DMS reads it
+      session_dir="$HOME/.local/state/DankMaterialShell"
+      ${pkgs.coreutils}/bin/mkdir -p "$session_dir"
+      session_file="$session_dir/session.json"
+      if [ -f "$session_file" ]; then
+        ${pkgs.jq}/bin/jq --arg wp "$wallpaper" '.wallpaperPath = $wp | .wallpaperPathDark = $wp | .wallpaperPathLight = $wp' "$session_file" > "$session_file.tmp" && mv "$session_file.tmp" "$session_file"
+      else
+        echo "{\"wallpaperPath\": \"$wallpaper\", \"wallpaperPathDark\": \"$wallpaper\", \"wallpaperPathLight\": \"$wallpaper\"}" > "$session_file"
+      fi
     '';
   in {
     Unit = {
-      After = ["dms.service" "clone-wallpapers.service"];
-      Description = "Set random wallpaper via DMS on session start";
+      Before = ["dms.service"];
+      Description = "Pre-select random wallpaper before DMS starts";
     };
 
-    Install.WantedBy = ["dms.service"];
+    Install.WantedBy = ["graphical-session.target"];
 
     Service = {
       Type = "oneshot";
-      ExecStartPre = "${pkgs.coreutils}/bin/sleep 5";
       ExecStart = "${script}";
     };
   };
 
   systemd.user.services.foot-autostart = {
     Unit = {
-      After = ["graphical-session.target" "random-wallpaper.service"];
+      After = ["graphical-session.target" "dms.service"];
       Description = "Launch foot on session start";
       PartOf = ["graphical-session.target"];
     };
@@ -250,7 +324,8 @@
     Install.WantedBy = ["graphical-session.target"];
 
     Service = {
-      ExecStart = "${pkgs.bash}/bin/bash -lc 'sleep 3; exec ${pkgs.foot}/bin/foot'";
+      ExecStartPre = "${pkgs.bash}/bin/bash -c 'rm -f $HOME/.config/foot/dank-colors.ini'";
+      ExecStart = "${pkgs.bash}/bin/bash -lc 'for i in $(seq 1 30); do [ -f $HOME/.config/foot/dank-colors.ini ] && break; sleep 0.5; done; exec ${pkgs.foot}/bin/foot'";
       Restart = "on-failure";
       RestartSec = 1;
     };

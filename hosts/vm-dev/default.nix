@@ -34,6 +34,8 @@
     user = "luke";
   };
 
+  programs.steam.enable = true;
+
   services.qemuGuest.enable = true;
 
   virtualisation.vmVariant = {
