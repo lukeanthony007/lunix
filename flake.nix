@@ -1,43 +1,62 @@
 {
-  description = "2026-ready Rust and TypeScript development environment for lu-nix";
+  description = "VM-first NixOS flake with a Rust and TypeScript development baseline";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     rust-overlay.url = "github:oxalica/rust-overlay";
+
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    niri = {
+      url = "github:sodiboo/niri-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = {
+  outputs = inputs@{
     self,
     flake-utils,
+    home-manager,
     nixpkgs,
     rust-overlay,
+    ...
   }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs {
+    let
+      mkPkgs = system:
+        import nixpkgs {
           inherit system;
           overlays = [(import rust-overlay)];
         };
 
-        rustToolchain =
-          pkgs.rust-bin.stable.latest.default.override {
-            extensions = [
-              "clippy"
-              "llvm-tools-preview"
-              "rust-analyzer"
-              "rust-src"
-              "rustfmt"
-            ];
-            targets = [
-              "wasm32-unknown-unknown"
-            ];
-          };
+      mkRustToolchain = pkgs:
+        pkgs.rust-bin.stable.latest.default.override {
+          extensions = [
+            "clippy"
+            "llvm-tools-preview"
+            "rust-analyzer"
+            "rust-src"
+            "rustfmt"
+          ];
+          targets = [
+            "wasm32-unknown-unknown"
+          ];
+        };
 
-        nodejs = pkgs.nodejs_24 or pkgs.nodejs;
+      mkNodejs = pkgs: pkgs.nodejs_24 or pkgs.nodejs;
+    in
+    flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        pkgs = mkPkgs system;
+        rustToolchain = mkRustToolchain pkgs;
+        nodejs = mkNodejs pkgs;
       in
       {
-        formatter = pkgs.nixfmt-rfc-style;
+        formatter = pkgs.nixfmt;
 
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
@@ -76,5 +95,36 @@
             echo "pnpm: $(pnpm --version)"
           '';
         };
-      });
+      }
+    )
+    // {
+      nixosConfigurations.vm-dev =
+        let
+          system = "x86_64-linux";
+          pkgs = mkPkgs system;
+          rustToolchain = mkRustToolchain pkgs;
+          nodejs = mkNodejs pkgs;
+        in
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+
+          specialArgs = {
+            inherit inputs nodejs rustToolchain self;
+          };
+
+          modules = [
+            inputs.niri.nixosModules.niri
+            home-manager.nixosModules.home-manager
+            ./hosts/vm-dev/default.nix
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.extraSpecialArgs = {
+                inherit inputs nodejs rustToolchain self;
+              };
+              home-manager.users.luke = import ./home/luke;
+            }
+          ];
+        };
+    };
 }

@@ -1,8 +1,10 @@
 .direnv/
+.tools/
 .DS_Store
 .envrc.local
 .idea/
 .vscode/
+*.qcow2
 coverage/
 dist/
 node_modules/

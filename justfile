@@ -3,6 +3,9 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 default:
   @just check
 
+nix-lock:
+  nix flake lock
+
 bootstrap:
   corepack enable
   pnpm install
@@ -21,3 +24,6 @@ lint:
 
 dev:
   pnpm dev
+
+vm-build:
+  nix build .#nixosConfigurations.vm-dev.config.system.build.vm
