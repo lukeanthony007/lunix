@@ -27,3 +27,15 @@ dev:
 
 vm-build:
   nix build .#nixosConfigurations.vm-dev.config.system.build.vm
+
+# Run the VM with default GTK frontend (primary validation path)
+vm-run: vm-build
+  ./result/bin/run-*-vm
+
+# Run the VM with serial console attached (for diagnostics alongside GTK)
+vm-run-serial: vm-build
+  ./result/bin/run-*-vm -serial mon:stdio
+
+# Run the VM using system QEMU (needed for GL/virgl on non-NixOS hosts)
+vm-run-gl: vm-build
+  sed "s|/nix/store/[^/]*/bin/qemu-system-x86_64|qemu-system-x86_64|" ./result/bin/run-*-vm | bash -s -- -serial mon:stdio

@@ -34,17 +34,17 @@
   };
 
   services.qemuGuest.enable = true;
-  services.spice-vdagentd.enable = true;
 
   virtualisation.vmVariant = {
     virtualisation = {
       cores = 4;
       graphics = true;
       memorySize = 8192;
-      resolution = {
-        x = 1600;
-        y = 900;
-      };
+      qemu.options = [
+        "-vga none"
+        "-device virtio-gpu-gl-pci"
+        "-display gtk,gl=on"
+      ];
     };
   };
 }
