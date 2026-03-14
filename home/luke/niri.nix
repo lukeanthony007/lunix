@@ -159,6 +159,11 @@
       "Mod+Minus".action.set-column-width = "-10%";
       "Mod+Equal".action.set-column-width = "+10%";
 
+      "Mod+WheelScrollDown".action.focus-workspace-down = {};
+      "Mod+WheelScrollUp".action.focus-workspace-up = {};
+      "Mod+Shift+WheelScrollDown".action.focus-column-right = {};
+      "Mod+Shift+WheelScrollUp".action.focus-column-left = {};
+
       "Print".action.screenshot = {};
       "Ctrl+Print".action.screenshot-screen = {};
       "Alt+Print".action.screenshot-window = {};
