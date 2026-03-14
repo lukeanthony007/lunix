@@ -194,7 +194,7 @@
     script = pkgs.writeShellScript "random-wallpaper" ''
       dir="$HOME/Pictures/Wallpapers"
       [ -d "$dir" ] || exit 0
-      wallpaper=$(${pkgs.findutils}/bin/find "$dir" -type f \( -name '*.jpg' -o -name '*.png' -o -name '*.avif' -o -name '*.webp' \) | ${pkgs.coreutils}/bin/shuf -n 1)
+      wallpaper=$(${pkgs.findutils}/bin/find "$dir" -not -path '*/.github/*' -type f \( -name '*.jpg' -o -name '*.png' -o -name '*.avif' -o -name '*.webp' \) | ${pkgs.coreutils}/bin/shuf -n 1)
       [ -n "$wallpaper" ] || exit 0
       exec dms ipc wallpaper set "$wallpaper"
     '';
