@@ -29,6 +29,11 @@ vm-build:
 
 # Run the VM with system QEMU (required for GL/virgl on non-NixOS hosts)
 vm-run: vm-build
+  rm -f vm-dev.qcow2
+  sed "s|/nix/store/[^/]*/bin/qemu-system-x86_64|qemu-system-x86_64|" ./result/bin/run-*-vm | bash
+
+# Run the VM preserving disk state between runs
+vm-run-persist: vm-build
   sed "s|/nix/store/[^/]*/bin/qemu-system-x86_64|qemu-system-x86_64|" ./result/bin/run-*-vm | bash
 
 # Run the VM with serial console attached

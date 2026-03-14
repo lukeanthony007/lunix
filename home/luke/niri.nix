@@ -2,7 +2,9 @@
 {
   home.packages = with pkgs; [
     firefox
+    foot
     git
+    nerd-fonts.jetbrains-mono
     wl-clipboard
   ];
 
@@ -25,38 +27,61 @@
     };
   };
 
-  programs.foot = {
+  programs.fish = {
     enable = true;
-    settings = {
-      main = {
-        font = "monospace:size=11";
-        pad = "8x8";
-      };
-      colors-dark = {
-        alpha = "0.92";
-        background = "1a1b26";
-        foreground = "c0caf5";
-        regular0 = "15161e";
-        regular1 = "f7768e";
-        regular2 = "9ece6a";
-        regular3 = "e0af68";
-        regular4 = "7aa2f7";
-        regular5 = "bb9af7";
-        regular6 = "7dcfff";
-        regular7 = "a9b1d6";
-        bright0 = "414868";
-        bright1 = "f7768e";
-        bright2 = "9ece6a";
-        bright3 = "e0af68";
-        bright4 = "7aa2f7";
-        bright5 = "bb9af7";
-        bright6 = "7dcfff";
-        bright7 = "c0caf5";
-      };
-    };
+    interactiveShellInit = ''
+      set fish_greeting
+    '';
   };
 
+  xdg.configFile."foot/foot.ini".text = ''
+    include=/home/luke/.config/foot/dank-colors.ini
+
+    shell=fish
+    term=xterm-256color
+    title=foot
+    font=JetBrainsMono Nerd Font:size=20
+    letter-spacing=0
+    dpi-aware=no
+    pad=40x40
+    bold-text-in-bright=no
+
+    [scrollback]
+    lines=10000
+
+    [cursor]
+    style=beam
+    blink=yes
+    beam-thickness=1.5
+
+    [key-bindings]
+    scrollback-up-page=Page_Up
+    scrollback-down-page=Page_Down
+    clipboard-copy=Control+c
+    clipboard-paste=Control+v
+    search-start=Control+f
+    font-increase=Control+plus Control+equal Control+KP_Add
+    font-decrease=Control+minus Control+KP_Subtract
+    font-reset=Control+0 Control+KP_0
+
+    [search-bindings]
+    cancel=Escape
+    find-prev=Shift+F3
+    find-next=F3 Control+G
+    delete-prev-word=Control+BackSpace
+
+    [text-bindings]
+    \x03=Control+Shift+c
+  '';
+
   programs.niri.settings = {
+    layer-rules = [
+      {
+        matches = [{ namespace = "^quickshell"; }];
+        opacity = 0.8;
+      }
+    ];
+
     environment = {
       "NIXOS_OZONE_WL" = "1";
       "GTK_THEME" = "Adwaita-dark";
@@ -67,10 +92,7 @@
     layout = {
       gaps = 10;
       border.enable = false;
-      focus-ring = {
-        enable = true;
-        width = 2;
-      };
+      focus-ring.enable = false;
     };
 
     prefer-no-csd = true;
@@ -199,7 +221,7 @@
     script = pkgs.writeShellScript "random-wallpaper" ''
       dir="$HOME/Pictures/Wallpapers"
       [ -d "$dir" ] || exit 0
-      wallpaper=$(${pkgs.findutils}/bin/find "$dir" -type f \( -name '*.jpg' -o -name '*.png' -o -name '*.avif' -o -name '*.webp' \) | ${pkgs.coreutils}/bin/shuf -n 1)
+      wallpaper=$(${pkgs.findutils}/bin/find "$dir" -type f -size +100k \( -name '*.jpg' -o -name '*.png' -o -name '*.avif' -o -name '*.webp' \) | ${pkgs.coreutils}/bin/shuf -n 1)
       [ -n "$wallpaper" ] || exit 0
       exec dms ipc wallpaper set "$wallpaper"
     '';
@@ -220,7 +242,7 @@
 
   systemd.user.services.foot-autostart = {
     Unit = {
-      After = ["graphical-session.target"];
+      After = ["graphical-session.target" "random-wallpaper.service"];
       Description = "Launch foot on session start";
       PartOf = ["graphical-session.target"];
     };
