@@ -12,7 +12,7 @@
   "widgetColorMode": "default",
   "controlCenterTileColorMode": "primary",
   "cornerRadius": 15,
-  "niriLayoutGapsOverride": -1,
+  "niriLayoutGapsOverride": 4,
   "niriLayoutRadiusOverride": -1,
   "niriLayoutBorderSize": -1,
   "hyprlandLayoutGapsOverride": -1,
