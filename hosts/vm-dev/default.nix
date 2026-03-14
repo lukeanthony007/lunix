@@ -45,6 +45,9 @@
         "-vga none"
         "-device virtio-gpu-gl-pci"
         "-display gtk,gl=on"
+        "-audiodev pipewire,id=audio0"
+        "-device intel-hda"
+        "-device hda-duplex,audiodev=audio0"
       ];
     };
   };
