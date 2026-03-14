@@ -112,14 +112,13 @@
         };
       }
     )
-    // {
-      nixosConfigurations.vm-dev =
-        let
-          system = "x86_64-linux";
-          pkgs = mkPkgs system;
-          rustToolchain = mkRustToolchain pkgs;
-          nodejs = mkNodejs pkgs;
-        in
+    // (let
+      system = "x86_64-linux";
+      pkgs = mkPkgs system;
+      rustToolchain = mkRustToolchain pkgs;
+      nodejs = mkNodejs pkgs;
+
+      mkHost = hostPath:
         nixpkgs.lib.nixosSystem {
           inherit system;
 
@@ -132,7 +131,7 @@
             inputs.dms.nixosModules.dank-material-shell
             inputs.dms.nixosModules.greeter
             home-manager.nixosModules.home-manager
-            ./hosts/vm-dev/default.nix
+            hostPath
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
@@ -148,5 +147,8 @@
             }
           ];
         };
-    };
+    in {
+      nixosConfigurations.vm-dev = mkHost ./hosts/vm-dev/default.nix;
+      nixosConfigurations.desktop = mkHost ./hosts/desktop/default.nix;
+    });
 }
