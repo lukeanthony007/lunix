@@ -3,7 +3,7 @@
   "currentThemeCategory": "generic",
   "customThemeFile": "",
   "registryThemeVariants": {},
-  "matugenScheme": "scheme-tonal-spot",
+  "matugenScheme": "scheme-neutral",
   "runUserMatugenTemplates": true,
   "matugenTargetMonitor": "",
   "popupTransparency": 0.85,
@@ -381,7 +381,7 @@
         {
           "id": "spacer",
           "enabled": true,
-          "size": 25
+          "size": 40
         },
         {
           "id": "focusedWindow",
