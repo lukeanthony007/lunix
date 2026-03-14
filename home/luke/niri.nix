@@ -65,7 +65,7 @@
     systemd.enable = true;
     niri = {
       enableKeybinds = true;
-      enableSpawn = true;
+      enableSpawn = false;
       includes.enable = true;
     };
     settings = builtins.fromJSON (builtins.readFile ./dms-settings.json);
