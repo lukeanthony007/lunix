@@ -7,6 +7,7 @@
   imports = [
     ../../modules/base.nix
     ../../modules/desktop/audio.nix
+    ../../modules/desktop/dms.nix
     ../../modules/desktop/fonts.nix
     ../../modules/desktop/niri.nix
     ../../modules/dev/rust.nix

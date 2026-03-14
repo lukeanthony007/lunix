@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 {
   home.packages = with pkgs; [
     firefox
@@ -25,16 +25,23 @@
   };
 
   programs.foot.enable = true;
-  programs.fuzzel.enable = true;
 
   programs.niri.settings = {
     environment."NIXOS_OZONE_WL" = "1";
   };
 
-  programs.waybar = {
+  programs.dank-material-shell = {
     enable = true;
     systemd.enable = true;
-    settings.mainBar.layer = "top";
+    niri = {
+      enableKeybinds = true;
+      enableSpawn = true;
+      includes.enable = true;
+    };
+  };
+
+  programs.dsearch = {
+    enable = true;
   };
 
   systemd.user.services.foot-autostart = {
@@ -52,6 +59,4 @@
       RestartSec = 1;
     };
   };
-
-  services.mako.enable = true;
 }

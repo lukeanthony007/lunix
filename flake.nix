@@ -15,6 +15,21 @@
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    dms = {
+      url = "github:AvengeMedia/DankMaterialShell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    dgop = {
+      url = "github:AvengeMedia/dgop";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    danksearch = {
+      url = "github:AvengeMedia/danksearch";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{
@@ -114,11 +129,18 @@
 
           modules = [
             inputs.niri.nixosModules.niri
+            inputs.dms.nixosModules.dank-material-shell
+            inputs.dms.nixosModules.greeter
             home-manager.nixosModules.home-manager
             ./hosts/vm-dev/default.nix
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
+              home-manager.sharedModules = [
+                inputs.dms.homeModules.dank-material-shell
+                inputs.dms.homeModules.niri
+                inputs.danksearch.homeModules.dsearch
+              ];
               home-manager.extraSpecialArgs = {
                 inherit inputs nodejs rustToolchain self;
               };

@@ -19,15 +19,12 @@
   services.greetd = {
     enable = true;
     settings.default_session = {
-      command = "${lib.getExe pkgs.tuigreet} --time --remember --remember-session --cmd ${lib.escapeShellArg (lib.getExe' config.programs.niri.package "niri-session")}";
       user = "greeter";
     };
   };
 
   environment.systemPackages = with pkgs; [
     foot
-    fuzzel
-    waybar
     wl-clipboard
     xwayland-satellite
   ];
