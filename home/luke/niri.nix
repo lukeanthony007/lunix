@@ -86,6 +86,7 @@
         matches = [{ app-id = "^foot$"; }];
         opacity = 0.75;
         draw-border-with-background = false;
+        default-column-width.proportion = 1.0;
       }
       {
         matches = [{ app-id = "^org\\.gnome\\.Nautilus$"; }];
@@ -197,7 +198,7 @@
     script = pkgs.writeShellScript "random-wallpaper" ''
       dir="$HOME/Pictures/Wallpapers"
       [ -d "$dir" ] || exit 0
-      wallpaper=$(${pkgs.findutils}/bin/find "$dir" -not -path '*/.github/*' -type f \( -name '*.jpg' -o -name '*.png' -o -name '*.avif' -o -name '*.webp' \) | ${pkgs.coreutils}/bin/shuf -n 1)
+      wallpaper=$(${pkgs.findutils}/bin/find "$dir" -maxdepth 2 -not -path '*/.git*' -type f \( -name '*.jpg' -o -name '*.png' -o -name '*.avif' -o -name '*.webp' \) -size +100k | ${pkgs.coreutils}/bin/shuf -n 1)
       [ -n "$wallpaper" ] || exit 0
       exec dms ipc wallpaper set "$wallpaper"
     '';
