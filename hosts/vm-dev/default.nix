@@ -39,6 +39,7 @@
   virtualisation.vmVariant = {
     virtualisation = {
       cores = 4;
+      diskSize = 8192;
       graphics = true;
       memorySize = 8192;
       qemu.options = [

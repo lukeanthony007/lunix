@@ -94,11 +94,19 @@
     enable = true;
   };
 
-  home.activation.cloneWallpapers = inputs.home-manager.lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if [ ! -d "$HOME/Pictures/Wallpapers/.git" ]; then
-      ${pkgs.git}/bin/git clone https://github.com/lukeanthony007/Wallpapers.git "$HOME/Pictures/Wallpapers" || true
-    fi
-  '';
+  systemd.user.services.clone-wallpapers = {
+    Unit = {
+      After = ["network-online.target"];
+      Description = "Clone wallpapers repo if missing";
+    };
+
+    Install.WantedBy = ["default.target"];
+
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'if [ ! -d $HOME/Pictures/Wallpapers/.git ]; then rm -rf $HOME/Pictures/Wallpapers; ${pkgs.git}/bin/git clone --depth 1 https://github.com/lukeanthony007/Wallpapers.git $HOME/Pictures/Wallpapers; fi'";
+    };
+  };
 
   systemd.user.services.random-wallpaper = let
     script = pkgs.writeShellScript "random-wallpaper" ''
@@ -110,7 +118,7 @@
     '';
   in {
     Unit = {
-      After = ["dms.service"];
+      After = ["dms.service" "clone-wallpapers.service"];
       Description = "Set random wallpaper via DMS on session start";
     };
 
