@@ -1,4 +1,18 @@
 { inputs, pkgs, ... }:
+let
+  patchedDmsPackage = inputs.dms.packages.${pkgs.stdenv.hostPlatform.system}.dms-shell.overrideAttrs (
+    old: {
+      postInstall =
+        (old.postInstall or "")
+        + ''
+          substituteInPlace $out/share/quickshell/dms/Modules/DankBar/DankBarWindow.qml \
+            --replace-fail \
+            'exclusiveZone: (!(barConfig?.visible ?? true) || topBarCore.autoHide) ? -1 : (barWindow.effectiveBarThickness + effectiveSpacing + (barConfig?.bottomGap ?? 0))' \
+            'exclusiveZone: (!(barConfig?.visible ?? true) || topBarCore.autoHide) ? -1 : (CompositorService.isNiri && !barWindow.isVertical ? 15 : (barWindow.effectiveBarThickness + effectiveSpacing + (barConfig?.bottomGap ?? 0)))'
+        '';
+    }
+  );
+in
 {
   home.packages = with pkgs; [
     firefox
@@ -86,7 +100,8 @@
         matches = [{ app-id = "^foot$"; }];
         opacity = 0.75;
         draw-border-with-background = false;
-        default-column-width.proportion = 1.0;
+        default-column-display = "tabbed";
+        open-maximized = true;
       }
       {
         matches = [{ app-id = "^org\\.gnome\\.Nautilus$"; }];
@@ -174,6 +189,7 @@
 
   programs.dank-material-shell = {
     enable = true;
+    package = patchedDmsPackage;
     systemd.enable = true;
     niri = {
       enableKeybinds = true;
@@ -235,7 +251,10 @@
 
   systemd.user.services.foot-autostart = {
     Unit = {
-      After = ["graphical-session.target"];
+      After = [
+        "graphical-session.target"
+        "dms.service"
+      ];
       Description = "Launch foot on session start";
       PartOf = ["graphical-session.target"];
     };
