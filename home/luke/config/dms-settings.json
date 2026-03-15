@@ -449,6 +449,8 @@
       "name": "Bar 2",
       "enabled": true,
       "position": 2,
+      "exclusiveZone": -15,
+      "spacing": 5,
       "screenPreferences": [
         "all"
       ],
@@ -490,12 +492,11 @@
         {
           "id": "spacer",
           "enabled": true,
-          "size": 35
+          "size": 15
         }
       ],
-      "spacing": 0,
       "innerPadding": -8,
-      "bottomGap": -5,
+      "bottomGap": -15,
       "transparency": 0,
       "widgetTransparency": 0,
       "squareCorners": true,
@@ -518,7 +519,7 @@
       "openOnOverview": false,
       "visible": true,
       "popupGapsAuto": true,
-      "popupGapsManual": 4,
+      "popupGapsManual": 5,
       "maximizeDetection": true,
       "scrollEnabled": true,
       "scrollXBehavior": "column",
@@ -529,6 +530,8 @@
       "name": "Bar 3",
       "enabled": true,
       "position": 3,
+      "exclusiveZone": -15,
+      "spacing": 5,
       "screenPreferences": [
         "all"
       ],
@@ -556,6 +559,10 @@
           "enabled": true
         },
         {
+          "id": "systemTray",
+          "enabled": true
+        },
+        {
           "id": "notificationButton",
           "enabled": true
         },
@@ -564,22 +571,13 @@
           "enabled": true
         },
         {
-          "id": "systemTray",
-          "enabled": true
-        },
-        {
           "id": "spacer",
           "enabled": true,
           "size": 25
-        },
-        {
-          "id": "dankClight",
-          "enabled": true
         }
       ],
-      "spacing": 0,
       "innerPadding": -8,
-      "bottomGap": -5,
+      "bottomGap": -15,
       "transparency": 0,
       "widgetTransparency": 0,
       "squareCorners": true,
@@ -602,7 +600,7 @@
       "openOnOverview": false,
       "visible": true,
       "popupGapsAuto": true,
-      "popupGapsManual": 4,
+      "popupGapsManual": 5,
       "maximizeDetection": true,
       "scrollEnabled": true,
       "scrollXBehavior": "column",

@@ -169,6 +169,7 @@
         modules = homeModulesShared ++ [
           ./home/luke
           ./home/luke/desktop.nix
+          ./home/luke/desktop/arch-gl.nix
           ./home/luke/gaming.nix
           ./home/luke/productivity.nix
         ];
@@ -179,6 +180,7 @@
         path = ./hosts/vm-dev;
         homeModules = [
           ./home/luke/desktop.nix
+          ./home/luke/desktop/hyprland-vm.nix
         ];
       };
       nixosConfigurations.desktop = mkHost {

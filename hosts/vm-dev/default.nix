@@ -16,8 +16,19 @@
     fsType = "ext4";
   };
 
+  programs.hyprland.enable = true;
+
   services.greetd.settings.initial_session = {
-    command = "Hyprland";
+    command = builtins.toString (pkgs.writeShellScript "hyprland-session" ''
+      export PATH="${pkgs.hyprland}/bin:${pkgs.foot}/bin:${pkgs.coreutils}/bin:$PATH"
+      export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+      mkdir -p "$HOME/.config/hypr/dms"
+      for f in execs general keybinds rules cursor; do
+        [ -f "$HOME/.config/hypr/dms/$f.conf" ] || touch "$HOME/.config/hypr/dms/$f.conf"
+      done
+      touch "$HOME/.config/foot/dank-colors.ini"
+      exec ${pkgs.hyprland}/bin/start-hyprland
+    '');
     user = "luke";
   };
 
@@ -31,8 +42,8 @@
       memorySize = 8192;
       qemu.options = [
         "-vga none"
-        "-device virtio-gpu-gl-pci"
-        "-display gtk,gl=on"
+        "-device virtio-gpu-pci"
+        "-display gtk"
         "-audiodev pipewire,id=audio0"
         "-device intel-hda"
         "-device hda-duplex,audiodev=audio0"
