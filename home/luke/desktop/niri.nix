@@ -108,6 +108,8 @@
       "Shift+WheelScrollDown".action.focus-column-right = {};
       "Shift+WheelScrollUp".action.focus-column-left = {};
 
+      "Mod+D".action.spawn = ["dms" "ipc" "spotlight" "toggle"];
+
       "Print".action.screenshot = {};
       "Ctrl+Print".action.screenshot-screen = {};
       "Alt+Print".action.screenshot-window = {};

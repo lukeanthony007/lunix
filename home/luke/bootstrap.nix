@@ -21,6 +21,16 @@ let
       touch "$HOME/.config/DankMaterialShell/.changelog-$v"
     done
 
+    # Hide unwanted apps from DMS launcher
+    SESSION_DIR="$HOME/.local/state/DankMaterialShell"
+    SESSION_FILE="$SESSION_DIR/session.json"
+    mkdir -p "$SESSION_DIR"
+    if [ -f "$SESSION_FILE" ]; then
+      ${pkgs.jq}/bin/jq '.hiddenApps = ["nvim","vim","gvim","btop","foot-server","footclient","ikhal"]' "$SESSION_FILE" > "$SESSION_FILE.tmp" && mv "$SESSION_FILE.tmp" "$SESSION_FILE"
+    else
+      echo '{"hiddenApps":["nvim","vim","gvim","btop","foot-server","footclient","ikhal"]}' > "$SESSION_FILE"
+    fi
+
     # Create initial status file so QML can find it
     mkdir -p "$HOME/.local/state"
     echo '{"task0state":"running","task0desc":"Starting...","task1state":"pending","task1desc":"Editor configuration","task2state":"pending","task2desc":"Cloud storage","progress":0.0,"status":"Starting...","wallpapers":[]}' > "$HOME/${statusFile}"
