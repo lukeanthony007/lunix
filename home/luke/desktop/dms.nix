@@ -10,10 +10,6 @@
   programs.dank-material-shell = {
     enable = true;
     systemd.enable = true;
-    niri = {
-      enableKeybinds = true;
-      enableSpawn = false;
-    };
     settings = builtins.fromJSON (builtins.readFile ../config/dms-settings.json);
     session = {
       isLightMode = false;

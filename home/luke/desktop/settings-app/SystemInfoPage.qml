@@ -41,7 +41,7 @@ Item {
                 Layout.fillWidth: true
                 title: "Desktop"
 
-                InfoRow { label: "Compositor"; value: "niri" }
+                InfoRow { label: "Compositor"; value: "Hyprland" }
                 InfoRow { label: "Shell"; value: "DankMaterialShell" }
                 InfoRow { label: "Terminal"; value: "foot" }
                 InfoRow { label: "Editor"; value: "neovim (NvChad)" }

@@ -35,21 +35,12 @@ let
     mkdir -p "$HOME/.local/state"
     echo '{"task0state":"running","task0desc":"Starting...","task1state":"pending","task1desc":"Editor configuration","task2state":"pending","task2desc":"Cloud storage","progress":0.0,"status":"Starting...","wallpapers":[]}' > "$HOME/${statusFile}"
 
-    # Ensure niri has a valid config (home-manager may not have written it yet)
-    if ! ${pkgs.niri}/bin/niri validate 2>/dev/null; then
-      mkdir -p "$HOME/.config/niri"
-      echo 'hotkey-overlay { skip-at-startup }' > "$HOME/.config/niri/config.kdl"
-      ${pkgs.niri}/bin/niri msg action reload-config 2>/dev/null || true
-    fi
-
     # Run bootstrap tasks in background
     sh "${bootstrapScript}" &
 
     # Start quickshell (blocks until user quits)
     ${pkgs.quickshell}/bin/quickshell -p "${qsConfigDir}"
 
-    # Reload niri config now that home-manager and DMS have written their includes
-    ${pkgs.niri}/bin/niri msg action reload-config 2>/dev/null || true
   '';
 
   lazyWallpapers = pkgs.writeShellScript "lazy-wallpapers" ''

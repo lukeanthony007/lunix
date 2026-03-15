@@ -1,6 +1,6 @@
 { ... }:
 {
-  # System-level DMS: greeter config. User-level runtime config is in home/luke/niri.nix.
+  # System-level DMS: greeter config. User-level runtime config is in home/luke/desktop/dms.nix.
   programs.dank-material-shell = {
     enable = true;
     systemd = {

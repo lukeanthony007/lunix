@@ -73,7 +73,7 @@
   "github.copilot.nextEditSuggestions.enabled": true,
   "terminal.integrated.stickyScroll.enabled": false,
   "tidalcycles.ghciPath": "/usr/bin/ghci",
-  "tidalcycles.bootTidalPath": "/home/ln64/.tidal/boot.tidal",
+  "tidalcycles.bootTidalPath": "/home/luke/.tidal/boot.tidal",
   "inlineChat.lineNaturalLanguageHint": false,
   "tidal.autobootEnabled": true,
   "github.copilot.enable": {

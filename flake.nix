@@ -126,7 +126,6 @@
 
       homeModulesShared = [
         inputs.dms.homeModules.dank-material-shell
-        inputs.dms.homeModules.niri
         inputs.dms-plugin-registry.modules.default
         inputs.danksearch.homeModules.dsearch
       ];
@@ -148,7 +147,10 @@
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
-              home-manager.sharedModules = homeModulesShared;
+              home-manager.sharedModules = homeModulesShared ++ [
+                inputs.dms.homeModules.niri
+                inputs.niri.homeModules.niri
+              ];
               home-manager.extraSpecialArgs = {
                 inherit inputs nodejs rustToolchain self;
               };
@@ -167,9 +169,7 @@
           inherit inputs nodejs rustToolchain self;
         };
 
-        modules = [
-          inputs.niri.homeModules.niri
-        ] ++ homeModulesShared ++ [
+        modules = homeModulesShared ++ [
           ./home/luke
           ./home/luke/desktop.nix
           ./home/luke/gaming.nix
