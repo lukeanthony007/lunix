@@ -29,6 +29,7 @@
         geometry-corner-radius = let r = 12.0; in { bottom-left = r; bottom-right = r; top-left = r; top-right = r; };
         clip-to-geometry = true;
         default-column-width.proportion = 1.0;
+        draw-border-with-background = false;
       }
       {
         matches = [{ app-id = "^foot$"; }];

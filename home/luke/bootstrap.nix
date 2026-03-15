@@ -89,6 +89,9 @@ in
         Environment = [
           "WAYLAND_DISPLAY=wayland-1"
           "XDG_RUNTIME_DIR=%t"
+          "LIBGL_DRIVERS_PATH=/usr/lib/dri"
+          "__EGL_VENDOR_LIBRARY_DIRS=/usr/share/glvnd/egl_vendor.d"
+          "LD_LIBRARY_PATH=/usr/lib"
         ];
         TimeoutStartSec = "10min";
       };

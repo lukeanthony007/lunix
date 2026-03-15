@@ -1,5 +1,5 @@
 {
-  description = "VM-first NixOS flake with a Rust and TypeScript development baseline";
+  description = "NixOS + standalone Home Manager flake with Rust and TypeScript development baseline";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -49,6 +49,7 @@
       mkPkgs = system:
         import nixpkgs {
           inherit system;
+          config.allowUnfree = true;
           overlays = [(import rust-overlay)];
         };
 
@@ -123,6 +124,13 @@
       rustToolchain = mkRustToolchain pkgs;
       nodejs = mkNodejs pkgs;
 
+      homeModulesShared = [
+        inputs.dms.homeModules.dank-material-shell
+        inputs.dms.homeModules.niri
+        inputs.dms-plugin-registry.modules.default
+        inputs.danksearch.homeModules.dsearch
+      ];
+
       mkHost = { path, homeModules ? [] }:
         nixpkgs.lib.nixosSystem {
           inherit system;
@@ -140,12 +148,7 @@
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
-              home-manager.sharedModules = [
-                inputs.dms.homeModules.dank-material-shell
-                inputs.dms.homeModules.niri
-                inputs.dms-plugin-registry.modules.default
-                inputs.danksearch.homeModules.dsearch
-              ];
+              home-manager.sharedModules = homeModulesShared;
               home-manager.extraSpecialArgs = {
                 inherit inputs nodejs rustToolchain self;
               };
@@ -156,6 +159,25 @@
           ];
         };
     in {
+      # Standalone Home Manager for Arch (or any non-NixOS host)
+      homeConfigurations.luke = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
+
+        extraSpecialArgs = {
+          inherit inputs nodejs rustToolchain self;
+        };
+
+        modules = [
+          inputs.niri.homeModules.niri
+        ] ++ homeModulesShared ++ [
+          ./home/luke
+          ./home/luke/desktop.nix
+          ./home/luke/gaming.nix
+          ./home/luke/productivity.nix
+        ];
+      };
+
+      # NixOS configurations (kept for VMs and future devices)
       nixosConfigurations.vm-dev = mkHost {
         path = ./hosts/vm-dev;
         homeModules = [
