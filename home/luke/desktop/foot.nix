@@ -55,7 +55,7 @@
 
     Service = {
       ExecStartPre = "${pkgs.bash}/bin/bash -c 'rm -f $HOME/.config/foot/dank-colors.ini'";
-      ExecStart = "${pkgs.bash}/bin/bash -lc 'for i in $(seq 1 30); do [ -f $HOME/.config/foot/dank-colors.ini ] && break; sleep 0.5; done; exec ${pkgs.foot}/bin/foot'";
+      ExecStart = "${pkgs.bash}/bin/bash -lc 'for i in $(seq 1 30); do [ -f $HOME/.config/foot/dank-colors.ini ] && break; sleep 0.5; done; exec ${pkgs.foot}/bin/foot 2>/dev/null'";
       Restart = "on-failure";
       RestartSec = 1;
     };
