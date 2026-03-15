@@ -1,5 +1,16 @@
 { pkgs, ... }:
 let
+  # Kill active window — pkill apps that ignore WM close (e.g. Spotify)
+  hypr-kill = pkgs.writeShellScriptBin "hypr-kill" ''
+    CLASS=$(hyprctl activewindow -j | ${pkgs.jq}/bin/jq -r '.class')
+    case "$CLASS" in
+      Spotify|spotify)
+        pkill -x spotify ;;
+      *)
+        hyprctl dispatch killactive ;;
+    esac
+  '';
+
   # Focus-or-launch: focuses existing window by class, or launches it
   focus-window = pkgs.writeShellScriptBin "focus-window" ''
     FORCE_NEW=false
@@ -42,13 +53,15 @@ let
   '';
 in
 {
-  home.packages = [ focus-window hypr-zoom ];
+  home.packages = [ focus-window hypr-kill hypr-zoom ];
 
   wayland.windowManager.hyprland = {
     enable = true;
     systemd.enable = true;
 
     settings = {
+      "exec" = "hyprctl dispatch submap global";
+      "submap" = "global";
       "$mod" = "SUPER";
 
       # --- Monitor ---
@@ -135,8 +148,9 @@ in
         "$mod, GRAVE, togglespecialworkspace"
         "$mod SHIFT, GRAVE, movetoworkspace, special"
         "$mod Alt, Space, togglefloating"
-        "Alt, F4, killactive"
-        "$mod, X, killactive"
+        "Alt, F4, exec, hypr-kill"
+        "$mod, Q, exec, hypr-kill"
+        "$mod, X, exec, hypr-kill"
 
         # Workspace navigation
         "$mod, up, workspace, -1"
@@ -216,10 +230,6 @@ in
         match:class = com.libretro.RetroArch
         render_unfocused = on
       }
-
-      # DMS integration
-      exec = hyprctl dispatch submap global
-      submap = global
 
       source = dms/execs.conf
       source = dms/general.conf

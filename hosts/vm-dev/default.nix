@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ pkgs, ... }:
 {
   imports = [
     ../../modules
@@ -17,20 +17,7 @@
   };
 
   services.greetd.settings.initial_session = {
-    command = let
-      niri = lib.getExe' config.programs.niri.package "niri-session";
-    in builtins.toString (pkgs.writeShellScript "niri-initial-session" ''
-        mkdir -p "$HOME/.config/niri/dms"
-        # Create stub DMS includes so niri can parse config.kdl before DMS generates them
-        for f in alttab binds colors layout outputs wpblur; do
-          [ -f "$HOME/.config/niri/dms/$f.kdl" ] || touch "$HOME/.config/niri/dms/$f.kdl"
-        done
-        # Ensure hm.kdl exists (home-manager symlink may not be ready yet)
-        if [ ! -e "$HOME/.config/niri/hm.kdl" ]; then
-          printf 'hotkey-overlay {\n    skip-at-startup\n}\n' > "$HOME/.config/niri/hm.kdl"
-        fi
-        exec ${niri}
-      '');
+    command = "Hyprland";
     user = "luke";
   };
 

@@ -1,5 +1,5 @@
 {
-  description = "NixOS + standalone Home Manager flake with Rust and TypeScript development baseline";
+  description = "NixOS + standalone Home Manager flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -8,11 +8,6 @@
 
     home-manager = {
       url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    niri = {
-      url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -33,6 +28,11 @@
 
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    spicetify-nix = {
+      url = "github:Gerg-L/spicetify-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -128,6 +128,7 @@
         inputs.dms.homeModules.dank-material-shell
         inputs.dms-plugin-registry.modules.default
         inputs.danksearch.homeModules.dsearch
+        inputs.spicetify-nix.homeManagerModules.default
       ];
 
       mkHost = { path, homeModules ? [] }:
@@ -139,7 +140,6 @@
           };
 
           modules = [
-            inputs.niri.nixosModules.niri
             inputs.dms.nixosModules.dank-material-shell
             inputs.dms.nixosModules.greeter
             home-manager.nixosModules.home-manager
@@ -147,10 +147,7 @@
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
-              home-manager.sharedModules = homeModulesShared ++ [
-                inputs.dms.homeModules.niri
-                inputs.niri.homeModules.niri
-              ];
+              home-manager.sharedModules = homeModulesShared;
               home-manager.extraSpecialArgs = {
                 inherit inputs nodejs rustToolchain self;
               };

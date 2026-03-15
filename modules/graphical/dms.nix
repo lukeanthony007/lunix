@@ -15,7 +15,7 @@
     enableClipboardPaste = true;
     greeter = {
       enable = true;
-      compositor.name = "niri";
+      compositor.name = "hyprland";
       configHome = "/home/luke";
     };
   };
