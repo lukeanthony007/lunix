@@ -72,17 +72,34 @@ For deploying to real hardware (mini PC, laptop, etc.):
 
 ```bash
 just appliance-bare-build    # build system closure (requires --impure)
+just appliance-bare-check    # quick eval check
+just appliance-bare-guide    # show full install steps
 ```
 
 Install on target hardware:
 
-1. Boot the NixOS installer on the target machine
-2. Partition the disk (EFI + root, label root as `nixos`, EFI as `BOOT`)
-3. Run `nixos-generate-config --root /mnt`
+1. Boot the NixOS minimal installer on the target machine
+2. Partition the disk:
+   ```
+   parted /dev/sdX -- mklabel gpt
+   parted /dev/sdX -- mkpart ESP fat32 1MiB 512MiB
+   parted /dev/sdX -- set 1 esp on
+   parted /dev/sdX -- mkpart primary ext4 512MiB 100%
+   mkfs.fat -F 32 -n BOOT /dev/sdX1
+   mkfs.ext4 -L nixos /dev/sdX2
+   ```
+3. Mount and generate hardware config:
+   ```
+   mount /dev/disk/by-label/nixos /mnt
+   mkdir -p /mnt/boot
+   mount /dev/disk/by-label/BOOT /mnt/boot
+   nixos-generate-config --root /mnt
+   ```
 4. Replace `hosts/appliance-bare/hardware-configuration.nix` with the generated version
-5. Run `nixos-install --flake .#appliance-bare`
+5. Install: `nixos-install --flake .#appliance-bare --impure`
+6. Reboot, then run `raia-provision` and `sudo systemctl restart raia-core`
 
-The bare-metal config uses systemd-boot (EFI), enables NetworkManager for WiFi, and includes redistributable firmware. The appliance experience (raia-core + greetd + Hyprland + Foot + raia-shell) is identical to the VM variant.
+The bare-metal config uses systemd-boot (EFI), enables NetworkManager for WiFi, and includes redistributable firmware. The appliance experience is identical to the VM variant.
 
 ### Persist disk state
 
@@ -209,6 +226,55 @@ The raia-core service is configured with `Restart=on-failure` (5 retries in 120s
 ### Network unavailable
 
 raia-core and raia-shell function locally. If external API calls fail (e.g., Anthropic), the runtime reports errors through the shell's response annotations. The appliance remains interactive.
+
+## Identity parameterization
+
+The appliance user identity is parameterized via `applianceUser` in the flake:
+
+```nix
+nixosConfigurations.my-appliance = mkAppliance {
+  applianceUser = "alice";  # default: "luke"
+  hostPath = ./hosts/appliance-bare;
+  raia-core-command = "${raia-core-pkg}/bin/raia-core";
+  raia-shell-package = raia-shell-pkg;
+};
+```
+
+This controls:
+- NixOS user account creation (`modules/core/users.nix`)
+- Home Manager user mapping
+- greetd auto-login user
+- raia-core service user and home directory (`services.raia-core.user`, `services.raia-core.home`)
+
+The Home Manager configs live in `home/luke/` (source directory name), but they are user-agnostic — the directory name is the source layout, not the runtime identity.
+
+The `services.raia-core` module also accepts direct overrides if needed:
+
+```nix
+services.raia-core = {
+  user = "custom-user";
+  home = "/home/custom-user";
+};
+```
+
+## Shell commands
+
+The shell prompt shows contextual state:
+
+```
+raia [session_id]>              # normal
+raia [session_id|disconnected]> # core unreachable
+raia [session_id|touch]>        # touch pending confirmation/execution
+```
+
+Commands are organized by category (`/help` for full list):
+
+- **Session**: `/session`, `/sessions`, `/new`, `/resume`, `/history`
+- **Touches**: `/confirm` → `/execute` (or `/reject`), `/touches`, `/touch`
+- **Operations**: `/ops`, `/trace`
+- **System**: `/status`, `/reconnect`, `/diag`, `/quit`
+
+Touch states are color-coded: Proposed (yellow), Queued (cyan), InFlight (blue), Settled (green), Failed (red). Available actions are shown inline after each touch listing.
 
 ## What's included vs. stripped
 

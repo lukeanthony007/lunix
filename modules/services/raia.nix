@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, applianceUser ? "luke", ... }:
 
 let
   cfg = config.services.raia-core;
@@ -158,13 +158,13 @@ in
 
     home = lib.mkOption {
       type = lib.types.str;
-      default = "/home/luke";
+      default = "/home/${applianceUser}";
       description = "Home directory of the user running raia-core";
     };
 
     user = lib.mkOption {
       type = lib.types.str;
-      default = "luke";
+      default = applianceUser;
       description = "User to run raia-core as";
     };
 

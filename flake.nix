@@ -150,13 +150,14 @@
       mkAppliance = { raia-core-command ? "${raia-core-stub}/bin/raia-core-stub"
                     , raia-shell-package ? pkgs.hello  # placeholder; override with real package
                     , hostPath ? ./hosts/appliance
+                    , applianceUser ? "luke"
                     }:
         nixpkgs.lib.nixosSystem {
           inherit system;
 
           specialArgs = {
             inherit inputs nodejs rustToolchain self;
-            inherit raia-core-command raia-shell-package;
+            inherit raia-core-command raia-shell-package applianceUser;
           };
 
           modules = [
@@ -168,7 +169,7 @@
               home-manager.extraSpecialArgs = {
                 inherit inputs nodejs rustToolchain self;
               };
-              home-manager.users.luke = {
+              home-manager.users.${applianceUser} = {
                 imports = [
                   ./home/luke
                   ./home/luke/appliance.nix

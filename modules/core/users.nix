@@ -1,11 +1,11 @@
-{ pkgs, ... }:
+{ pkgs, applianceUser ? "luke", ... }:
 {
   programs.fish.enable = true;
   users.mutableUsers = true;
 
-  users.users.luke = {
+  users.users.${applianceUser} = {
     isNormalUser = true;
-    description = "Luke";
+    description = applianceUser;
     extraGroups = [
       "audio"
       "docker"
@@ -13,7 +13,7 @@
       "video"
       "wheel"
     ];
-    initialPassword = "luke";
+    initialPassword = applianceUser;
     shell = pkgs.fish;
   };
 }

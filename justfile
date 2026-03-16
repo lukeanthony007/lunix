@@ -64,3 +64,49 @@ appliance-run-serial: appliance-build
 appliance-bare-build:
   nix build .#nixosConfigurations.appliance-bare.config.system.build.toplevel --impure
   @echo "bare-metal appliance built"
+
+# Evaluate the bare-metal config without building (quick check)
+appliance-bare-check:
+  nix eval .#nixosConfigurations.appliance-bare.config.system.build.toplevel --impure 2>&1 | tail -1
+  @echo "bare-metal config evaluates"
+
+# Show the install steps for bare-metal target
+appliance-bare-guide:
+  @echo ""
+  @echo "=== Raia Bare-Metal Install Guide ==="
+  @echo ""
+  @echo "Prerequisites:"
+  @echo "  - NixOS minimal installer USB (download from nixos.org)"
+  @echo "  - Target machine with EFI boot"
+  @echo "  - This repo accessible from the target (USB drive or network)"
+  @echo ""
+  @echo "On the target machine (booted from installer):"
+  @echo ""
+  @echo "  1. Partition the disk:"
+  @echo "     parted /dev/sdX -- mklabel gpt"
+  @echo "     parted /dev/sdX -- mkpart ESP fat32 1MiB 512MiB"
+  @echo "     parted /dev/sdX -- set 1 esp on"
+  @echo "     parted /dev/sdX -- mkpart primary ext4 512MiB 100%"
+  @echo ""
+  @echo "  2. Format:"
+  @echo "     mkfs.fat -F 32 -n BOOT /dev/sdX1"
+  @echo "     mkfs.ext4 -L nixos /dev/sdX2"
+  @echo ""
+  @echo "  3. Mount:"
+  @echo "     mount /dev/disk/by-label/nixos /mnt"
+  @echo "     mkdir -p /mnt/boot"
+  @echo "     mount /dev/disk/by-label/BOOT /mnt/boot"
+  @echo ""
+  @echo "  4. Generate hardware config:"
+  @echo "     nixos-generate-config --root /mnt"
+  @echo "     # Copy the generated file back to this repo:"
+  @echo "     cp /mnt/etc/nixos/hardware-configuration.nix hosts/appliance-bare/"
+  @echo ""
+  @echo "  5. Install:"
+  @echo "     nixos-install --flake .#appliance-bare --impure"
+  @echo ""
+  @echo "  6. Reboot and provision:"
+  @echo "     reboot"
+  @echo "     # After boot, run: raia-provision"
+  @echo "     # Then: sudo systemctl restart raia-core"
+  @echo ""

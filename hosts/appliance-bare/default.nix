@@ -1,4 +1,4 @@
-{ config, pkgs, lib, raia-core-command, raia-shell-package, ... }:
+{ config, pkgs, lib, raia-core-command, raia-shell-package, applianceUser ? "luke", ... }:
 
 #
 # Raia Continuity Appliance — bare-metal host profile
@@ -67,7 +67,7 @@
           exec ${pkgs.fish}/bin/fish
         }
       '');
-      user = "luke";
+      user = applianceUser;
     };
   };
 
