@@ -37,6 +37,23 @@
     createDirectories = true;
   };
 
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications = {
+      "x-scheme-handler/http" = "zen-beta.desktop";
+      "x-scheme-handler/https" = "zen-beta.desktop";
+      "text/html" = "zen-beta.desktop";
+      "application/xhtml+xml" = "zen-beta.desktop";
+      "video/mp4" = "mpv.desktop";
+      "video/quicktime" = "mpv.desktop";
+      "image/png" = "org.gnome.Loupe.desktop";
+      "image/jpeg" = "org.gnome.Loupe.desktop";
+      "application/toml" = "code.desktop";
+      "text/x-sh" = "code.desktop";
+      "x-scheme-handler/discord" = "vesktop.desktop";
+    };
+  };
+
   home.pointerCursor = {
     name = "Adwaita";
     package = pkgs.adwaita-icon-theme;
