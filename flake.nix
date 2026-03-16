@@ -149,6 +149,7 @@
       # different specialArgs and does not include zen-browser or DMS.
       mkAppliance = { raia-core-command ? "${raia-core-stub}/bin/raia-core-stub"
                     , raia-shell-package ? pkgs.hello  # placeholder; override with real package
+                    , hostPath ? ./hosts/appliance
                     }:
         nixpkgs.lib.nixosSystem {
           inherit system;
@@ -160,7 +161,7 @@
 
           modules = [
             home-manager.nixosModules.home-manager
-            ./hosts/appliance
+            hostPath
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
@@ -216,6 +217,13 @@
 
       # Raia continuity appliance — real runtime (requires --impure)
       nixosConfigurations.appliance-real = mkAppliance {
+        raia-core-command = "${raia-core-pkg}/bin/raia-core";
+        raia-shell-package = raia-shell-pkg;
+      };
+
+      # Raia continuity appliance — bare-metal target (requires --impure)
+      nixosConfigurations.appliance-bare = mkAppliance {
+        hostPath = ./hosts/appliance-bare;
         raia-core-command = "${raia-core-pkg}/bin/raia-core";
         raia-shell-package = raia-shell-pkg;
       };

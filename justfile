@@ -57,3 +57,10 @@ appliance-run-persist: appliance-build
 # Run the appliance VM with serial console for debugging
 appliance-run-serial: appliance-build
   just _appliance-exec -s -- -serial mon:stdio
+
+# === Raia Appliance (bare-metal target) ===
+
+# Build the bare-metal appliance system closure (requires --impure)
+appliance-bare-build:
+  nix build .#nixosConfigurations.appliance-bare.config.system.build.toplevel --impure
+  @echo "bare-metal appliance built"

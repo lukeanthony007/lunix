@@ -5,9 +5,11 @@ A minimal NixOS profile that boots directly into a guarded raia-shell experience
 ## Boot path
 
 ```
-hardware → GRUB → systemd → raia-core.service
-                           → greetd → Hyprland → Foot → raia-shell
+hardware → bootloader → systemd → raia-core.service
+                                → greetd → Hyprland → Foot → raia-shell
 ```
+
+VM variant uses GRUB. Bare-metal uses systemd-boot (EFI).
 
 - `raia-core` starts as a system service on boot
 - greetd auto-logs in and starts Hyprland
@@ -63,6 +65,24 @@ Uses stub core — no real runtime, validates boot path only:
 just appliance-build-stub   # no --impure needed
 just appliance-check        # eval check only
 ```
+
+### Bare-metal appliance
+
+For deploying to real hardware (mini PC, laptop, etc.):
+
+```bash
+just appliance-bare-build    # build system closure (requires --impure)
+```
+
+Install on target hardware:
+
+1. Boot the NixOS installer on the target machine
+2. Partition the disk (EFI + root, label root as `nixos`, EFI as `BOOT`)
+3. Run `nixos-generate-config --root /mnt`
+4. Replace `hosts/appliance-bare/hardware-configuration.nix` with the generated version
+5. Run `nixos-install --flake .#appliance-bare`
+
+The bare-metal config uses systemd-boot (EFI), enables NetworkManager for WiFi, and includes redistributable firmware. The appliance experience (raia-core + greetd + Hyprland + Foot + raia-shell) is identical to the VM variant.
 
 ### Persist disk state
 
@@ -130,13 +150,14 @@ Inspect the active context via raia-shell:
 
 ### Shell behavior after core restart
 
-- Shell uses token-level streaming (NDJSON over `/api/cycle/run/stream`) for live text rendering
-- Shell detects core unavailability on next input attempt
-- Prints diagnostic: "core is unreachable — check that the server is running on :4111"
-- Stream failures fall back gracefully — partial text is preserved, error shown inline
-- Shell stays open — user can retry when core comes back
-- `/reconnect` — explicitly re-check core and session state
-- `/status` — shows core connection state
+- Shell tracks core connectivity state and reflects it in the prompt (`[disconnected]`)
+- On stream interruption mid-response, partial text is preserved with `[stream interrupted]` marker
+- If streaming fails before any text arrives, shell falls back to synchronous `/api/cycle/run` automatically
+- When disconnected, shell blocks natural-language input with a clear message (no silent failures)
+- On next input attempt while disconnected, shell tries a quick health check and reconnects automatically
+- `/reconnect` — retry core connectivity (3 attempts, 2s intervals) and verify session validity
+- `/status` — shows core connection state and updates the `connected` flag
+- Session continuity: sessions are server-side; after core restart, the existing session ID remains valid
 
 ### Shell exit/crash
 
@@ -221,20 +242,33 @@ raia-core and raia-shell function locally. If external API calls fail (e.g., Ant
 
 ## Touch execution
 
-Two-step touch model (propose → confirm/reject) is retained for Wave 3.5. The appliance does not require touch execution to prove continuity terminal viability. Shell commands: `/confirm`, `/reject`, `/touch`, `/touches`.
+Full three-step touch model: propose → confirm → execute.
+
+- **Propose**: Runtime proposes a touch during a cycle. Touch appears as an escalation prompt in the shell.
+- **Confirm**: `/confirm` queues the touch for execution (Proposed → Queued).
+- **Execute**: `/execute` dispatches the touch through the runtime path (Queued → InFlight → Settled/Failed). The server handler performs dispatch, executes the effect, and settles in a single request.
+
+Supported touch kinds for server-side execution:
+- `fs-write`, `fs-delete`, `fs-move`, `fs-mkdir` — filesystem operations
+- `memory-remember` — vault node creation
+- `gm-*` — general memory operations (get/write/create via vault)
+
+Shell commands: `/confirm`, `/reject`, `/execute`, `/touch`, `/touches`.
 
 ## Files
 
 ```
-hosts/appliance/default.nix        # Host profile (boot, services, VM config)
-modules/services/raia.nix           # raia-core systemd service + provisioning
-home/luke/appliance.nix             # Home Manager entry (imports below)
-home/luke/appliance/hyprland.nix    # Simplified Hyprland for appliance
-home/luke/appliance/foot.nix        # Foot → raia-shell launcher (with relaunch loop)
-home/luke/appliance/provision.nix   # First-boot provisioning check service
-packages/raia-shell.nix             # Nix build for raia-shell (from source)
-packages/raia-shell/Cargo.toml      # Standalone Cargo.toml for Nix build
-packages/raia-shell/Cargo.lock      # Lock file for reproducible builds
-packages/raia-core.nix              # Multi-stage from-source build (Rust NAPI + npm + Bun compile)
-packages/raia-core-stub.nix         # Stub server for boot-path testing (CI/eval)
+hosts/appliance/default.nix                # VM host profile (boot, services, QEMU config)
+hosts/appliance-bare/default.nix           # Bare-metal host profile (EFI, NetworkManager)
+hosts/appliance-bare/hardware-configuration.nix  # Hardware config (replace on target)
+modules/services/raia.nix                  # raia-core systemd service + provisioning
+home/luke/appliance.nix                    # Home Manager entry (imports below)
+home/luke/appliance/hyprland.nix           # Simplified Hyprland for appliance
+home/luke/appliance/foot.nix               # Foot → raia-shell launcher (with relaunch loop)
+home/luke/appliance/provision.nix          # First-boot provisioning check service
+packages/raia-shell.nix                    # Nix build for raia-shell (from source)
+packages/raia-shell/Cargo.toml             # Standalone Cargo.toml for Nix build
+packages/raia-shell/Cargo.lock             # Lock file for reproducible builds
+packages/raia-core.nix                     # Multi-stage from-source build (Rust NAPI + npm + Bun compile)
+packages/raia-core-stub.nix               # Stub server for boot-path testing (CI/eval)
 ```
