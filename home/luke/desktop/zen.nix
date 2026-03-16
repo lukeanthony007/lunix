@@ -12,6 +12,10 @@
           installation_mode = "normal_installed";
           install_url = "https://addons.mozilla.org/firefox/downloads/latest/darkreader/latest.xpi";
         };
+        "sponsorBlocker@ajay.app" = {
+          installation_mode = "normal_installed";
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/sponsorblock/latest.xpi";
+        };
       };
     };
   };
