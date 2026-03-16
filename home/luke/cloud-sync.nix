@@ -3,12 +3,6 @@
 let
   cfg = config.services.cloud-sync;
 
-  providerPackages = {
-    b2 = [];
-    gdrive = [];
-    onedrive = [];
-  };
-
   syncScript = pkgs.writeShellScript "cloud-sync" ''
     set -euo pipefail
 
@@ -17,25 +11,26 @@ let
     RCLONE_CONF="$HOME/.config/rclone/rclone.conf"
 
     if [ ! -f "$RCLONE_CONF" ]; then
-      echo "ERROR: rclone not configured. Run 'rclone config' first to set up remote '$REMOTE'."
+      echo "ERROR: rclone not configured. Run 'cloud-sync-setup' first."
       exit 1
     fi
 
     if ! $RCLONE listremotes | grep -q "^''${REMOTE}:$"; then
       echo "ERROR: Remote '$REMOTE' not found in rclone config."
-      echo "Available remotes:"
       $RCLONE listremotes
       exit 1
     fi
 
     ${lib.concatMapStringsSep "\n" (dir: ''
-      echo "Syncing ${dir.remote} -> $HOME/${dir.local}"
+      echo "Bisync ${dir.remote} <-> $HOME/${dir.local}"
       ${pkgs.coreutils}/bin/mkdir -p "$HOME/${dir.local}"
-      $RCLONE sync "$REMOTE:${dir.remote}" "$HOME/${dir.local}" \
-        --progress \
+      $RCLONE bisync "$REMOTE:${dir.remote}" "$HOME/${dir.local}" \
+        --create-empty-src-dirs \
         --transfers 8 \
         --checkers 16 \
-        --log-level INFO
+        --log-level INFO \
+        --resilient \
+        "$@"
     '') cfg.directories}
 
     echo "Cloud sync complete."
@@ -81,6 +76,9 @@ let
     echo "Testing connection..."
     if $RCLONE lsd "$REMOTE:" > /dev/null 2>&1; then
       echo "Connected to $REMOTE successfully."
+      echo ""
+      echo "Running initial bisync with --resync to establish baseline..."
+      ${syncScript} --resync
     else
       echo "WARNING: Could not list remote. Check your configuration with 'rclone config'."
     fi
@@ -93,7 +91,7 @@ in
     provider = lib.mkOption {
       type = lib.types.enum [ "b2" "gdrive" "onedrive" ];
       description = "Cloud storage provider";
-      example = "b2";
+      example = "gdrive";
     };
 
     remoteName = lib.mkOption {
@@ -118,7 +116,7 @@ in
         };
       });
       default = [];
-      description = "Directories to sync from cloud to local";
+      description = "Directories to bidirectionally sync";
     };
 
     timerInterval = lib.mkOption {
@@ -131,22 +129,19 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [ pkgs.rclone ];
 
-    # One-shot setup helper: run `cloud-sync-setup` in a terminal
     home.file.".local/bin/cloud-sync-setup" = {
       executable = true;
       source = setupScript;
     };
 
-    # One-shot sync: run `cloud-sync` manually or via service
     home.file.".local/bin/cloud-sync" = {
       executable = true;
       source = syncScript;
     };
 
-    # Bootstrap sync on first login
     systemd.user.services.cloud-sync = {
       Unit = {
-        Description = "Sync cloud storage via rclone (${cfg.provider})";
+        Description = "Bidirectional cloud sync via rclone (${cfg.provider})";
         Wants = [ "network-online.target" ];
         After = [ "network-online.target" ];
       };
@@ -156,12 +151,10 @@ in
       Service = {
         Type = "oneshot";
         ExecStart = "${syncScript}";
-        # Don't fail the boot if cloud sync fails
         ExecStartPost = "${pkgs.bash}/bin/bash -c 'true'";
       };
     };
 
-    # Periodic background sync
     systemd.user.timers.cloud-sync = {
       Unit.Description = "Periodic cloud storage sync";
       Install.WantedBy = [ "timers.target" ];

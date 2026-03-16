@@ -74,11 +74,13 @@
 
   services.cloud-sync = {
     enable = true;
-    provider = "b2";
-    remoteName = "cloud";
+    provider = "gdrive";
+    remoteName = "gdrive";
     directories = [
       { remote = "Documents"; local = "Documents"; }
       { remote = "Pictures";  local = "Pictures"; }
+      { remote = "Desktop";   local = "Desktop"; }
+      { remote = "Music";     local = "Music"; }
     ];
   };
 }
