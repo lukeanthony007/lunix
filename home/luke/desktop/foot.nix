@@ -63,10 +63,10 @@
     Unit = {
       After = ["hyprland-session.target" "dms.service"];
       Description = "Launch foot on session start";
-      PartOf = ["graphical-session.target"];
+      PartOf = ["hyprland-session.target"];
     };
 
-    Install.WantedBy = ["graphical-session.target"];
+    Install.WantedBy = ["hyprland-session.target"];
 
     Service = {
       ExecStartPre = "${pkgs.bash}/bin/bash -c 'rm -f $HOME/.config/foot/dank-colors.ini'";
