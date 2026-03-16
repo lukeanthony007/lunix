@@ -85,10 +85,7 @@ in
       };
     };
 
-    # Make DMS and foot wait for bootstrap to finish
-    systemd.user.services.dms = {
-      Unit.After = [ "bootstrap.service" ];
-    };
+    # Make foot wait for bootstrap to finish
     systemd.user.services.foot-autostart = {
       Unit.After = [ "bootstrap.service" ];
     };

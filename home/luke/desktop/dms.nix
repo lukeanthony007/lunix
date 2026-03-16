@@ -1,24 +1,7 @@
 { pkgs, lib, ... }:
 {
-
-  programs.dank-material-shell = {
-    enable = true;
-    systemd.enable = true;
-    settings = builtins.fromJSON (builtins.readFile ../config/dms-settings.json);
-    clipboardSettings = {
-      maxHistory = 25;
-      maxEntrySize = 5242880;
-      autoClearDays = 1;
-      clearAtStartup = true;
-      disabled = false;
-      disableHistory = false;
-      disablePersist = true;
-    };
-  };
-
-  programs.dsearch = {
-    enable = true;
-  };
+  # DMS binary is installed via Arch — Nix only manages configuration
+  home.file.".config/DankMaterialShell/settings.json".source = ../config/dms-settings.json;
 
   systemd.user.services.random-wallpaper = let
     script = pkgs.writeShellScript "random-wallpaper" ''

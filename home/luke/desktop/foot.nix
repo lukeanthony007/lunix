@@ -1,7 +1,7 @@
 { config, pkgs, ... }:
 {
   xdg.configFile."foot/foot.ini".text = ''
-    include=${config.home.homeDirectory}/.config/foot/dank-colors.ini
+    include=${config.home.homeDirectory}/.config/foot/dank-colors-fixed.ini
 
     shell=fish
     term=xterm-256color
@@ -49,7 +49,7 @@
     Unit.Description = "Fix foot dank-colors.ini [colors] -> [colors-dark]";
     Service = {
       Type = "oneshot";
-      ExecStart = "${pkgs.gnused}/bin/sed -i s/^\\[colors\\]$/[colors-dark]/ %h/.config/foot/dank-colors.ini";
+      ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.gnused}/bin/sed \"s/^\\[colors\\]$/[colors-dark]/\" %h/.config/foot/dank-colors.ini > %h/.config/foot/dank-colors-fixed.ini'";
     };
   };
 
@@ -69,8 +69,7 @@
     Install.WantedBy = ["hyprland-session.target"];
 
     Service = {
-      ExecStartPre = "${pkgs.bash}/bin/bash -c 'rm -f $HOME/.config/foot/dank-colors.ini'";
-      ExecStart = "${pkgs.bash}/bin/bash -lc 'for i in $(seq 1 30); do [ -f $HOME/.config/foot/dank-colors.ini ] && break; sleep 0.5; done; ${pkgs.gnused}/bin/sed -i \"s/^\\[colors\\]$/[colors-dark]/\" $HOME/.config/foot/dank-colors.ini 2>/dev/null; exec ${pkgs.foot}/bin/foot'";
+      ExecStart = "${pkgs.bash}/bin/bash -lc 'for i in $(seq 1 30); do [ -f $HOME/.config/foot/dank-colors.ini ] && break; sleep 0.5; done; ${pkgs.gnused}/bin/sed \"s/^\\[colors\\]$/[colors-dark]/\" $HOME/.config/foot/dank-colors.ini > $HOME/.config/foot/dank-colors-fixed.ini; exec ${pkgs.foot}/bin/foot'";
       Restart = "on-failure";
       RestartSec = 1;
     };

@@ -12,7 +12,7 @@ Canonical architecture and operations reference for this NixOS + standalone Home
 | NixOS `desktop` | Available, not actively used |
 | NixOS `vm-dev` | Validated — used for testing |
 | NixOS `laptop` | Placeholder — hardware config not populated |
-| DMS on Arch | Running — requires GL fixups in `arch-gl.nix` |
+| DMS on Arch | Running natively via Arch installer — Nix manages configuration only |
 
 **Current compositor:** Hyprland is the only compositor target. All Hyprland config is active and current. There is no Niri, Sway, or other compositor config in this repo.
 
@@ -52,7 +52,7 @@ This flake manages a complete Linux desktop across three operating modes:
 | **NixOS desktop** | Full-system alternative | Entire system — kernel, services, users, plus Home Manager |
 | **NixOS vm-dev** | Validation target | Testing changes in a disposable VM before applying elsewhere |
 
-The desktop stack is **Hyprland** (Wayland compositor) + **Dank Material Shell (DMS)** (shell/panel/theming) + **Foot** (terminal) + **Fish** (shell). Everything is declarative and reproducible.
+The desktop stack is **Hyprland** (Wayland compositor) + **Dank Material Shell (DMS)** (shell/panel/theming) + **Foot** (terminal) + **Fish** (shell). DMS is installed natively on Arch; Nix manages its configuration and user customisations. Everything is declarative and reproducible.
 
 ```
 flake.nix
@@ -72,21 +72,20 @@ On Arch (the primary deployment), responsibilities are split between the host OS
 - Kernel, boot, drivers (GPU, WiFi, Bluetooth)
 - System services: greetd/SDDM, NetworkManager, PipeWire, SSH, Docker
 - Compositor binary (Hyprland installed via pacman)
+- DMS binary, service, greeter, and plugins (installed via `curl -fsSL https://install.danklinux.com | sh`)
 - XDG portals and polkit
-- GL/EGL driver stack (`/usr/lib/dri`, `/usr/share/glvnd`)
+- GL/EGL driver stack
 
 ### Home Manager owns
 
 - Shell environment (Fish, starship, zoxide, fzf)
 - Editors (VSCode, Neovim)
 - User applications (Zen, Spotify, Discord, Obsidian, etc.)
-- Desktop theming (GTK, Qt, DMS, cursor)
-- Hyprland configuration (keybinds, rules, animations, monitor)
-- DMS user-level service and config (clipboard, wallpaper, dsearch)
+- Desktop theming (GTK, Qt, cursor)
+- Hyprland configuration (`~/.config/hypr/custom/` override files)
+- DMS configuration (`~/.config/DankMaterialShell/settings.json` deployed via `home.file`)
 - User systemd services (bootstrap, cloud-sync, foot-autostart)
 - All `~/.config` managed files
-
-> On Arch, DMS is Nix-built and HM-managed at the user level, but depends on Arch's system GL/EGL stack to render. The `arch-gl.nix` shim bridges this by injecting Arch driver paths into the DMS service environment.
 
 ### Dev shell owns
 
@@ -99,7 +98,6 @@ On Arch (the primary deployment), responsibilities are split between the host OS
 ### On NixOS (desktop/vm-dev), NixOS additionally owns
 
 - Everything Arch owns above, declared in `modules/` and `hosts/`
-- System-level DMS (greeter config)
 - System fonts
 - User account definition
 
@@ -116,9 +114,6 @@ On Arch (the primary deployment), responsibilities are split between the host OS
 | `nixpkgs` | nixos-unstable channel |
 | `home-manager` | User environment management |
 | `rust-overlay` | Pinned Rust toolchain with extensions |
-| `dms` | Dank Material Shell compositor shell |
-| `dms-plugin-registry` | DMS plugin ecosystem |
-| `danksearch` | App launcher for DMS |
 | `zen-browser` | Firefox fork (Zen) |
 | `spicetify-nix` | Spotify customization |
 
@@ -127,7 +122,7 @@ On Arch (the primary deployment), responsibilities are split between the host OS
 - **`mkPkgs`** — Creates a nixpkgs instance with `allowUnfree` and the rust-overlay applied.
 - **`mkRustToolchain`** — Stable Rust with clippy, rust-analyzer, rustfmt, llvm-tools-preview, rust-src, and `wasm32-unknown-unknown` target.
 - **`mkNodejs`** — Resolves `nodejs_24` with a fallback to `nodejs`.
-- **`mkHost`** — Factory for NixOS configurations. Injects DMS NixOS modules, Home Manager integration, and passes `inputs`, `rustToolchain`, `nodejs`, and `self` as special args.
+- **`mkHost`** — Factory for NixOS configurations. Injects Home Manager integration and passes `inputs`, `rustToolchain`, `nodejs`, and `self` as special args.
 
 ### Dev shell
 
@@ -143,11 +138,10 @@ The standalone Home Manager configuration for use on Arch. Imports:
 
 - `home/luke/` — base (shell, git, editors)
 - `home/luke/desktop.nix` — full desktop environment
-- `home/luke/desktop/arch-gl.nix` — GL driver fixups for Nix apps on Arch
 - `home/luke/gaming.nix` — emulators and gaming tools
 - `home/luke/productivity.nix` — communication and productivity apps
 
-Shared Home Manager modules (DMS, DMS plugins, danksearch, spicetify, zen-browser) are injected into all configurations.
+Shared Home Manager modules (spicetify, zen-browser) are injected into all configurations.
 
 ### `nixosConfigurations.desktop`
 
@@ -175,9 +169,8 @@ lu-nix/
 │   │   ├── ssh.nix                     # OpenSSH hardening
 │   │   └── users.nix                   # User account (luke)
 │   ├── graphical/
-│   │   ├── default.nix                 # Imports audio, dms, fonts
+│   │   ├── default.nix                 # Imports audio, fonts
 │   │   ├── audio.nix                   # PipeWire audio stack
-│   │   ├── dms.nix                     # System-level DMS + greeter
 │   │   └── fonts.nix                   # System fonts
 │   └── development/
 │       ├── default.nix                 # Imports rust, typescript
@@ -205,10 +198,9 @@ lu-nix/
     ├── gaming.nix                      # Emulators (RetroArch, Dolphin, PCSX2)
     ├── productivity.nix                # Discord, Obsidian, Signal, Zoom, Deluge
     └── desktop/
-        ├── arch-gl.nix                 # Arch GL driver fixups for Nix binaries
-        ├── dms.nix                     # DMS user-level service and config
+        ├── dms.nix                     # DMS configuration (settings.json) and wallpaper service
         ├── foot.nix                    # Foot terminal configuration
-        ├── hyprland.nix                # Hyprland WM: keybinds, rules, animations
+        ├── hyprland.nix                # Hyprland WM: sources dms/ and custom/ config dirs
         ├── hyprland-vm.nix             # VM-specific Hyprland overrides
         ├── qt.nix                      # Qt6 theme (Darkly + DankMatugen colors)
         ├── settings.nix                # QuickShell settings app
@@ -234,7 +226,7 @@ Every config file falls into one of three categories. This matters when bringing
 | `home/luke/productivity.nix` | Discord, Obsidian, Signal, Zoom, Deluge |
 | `home/luke/gaming.nix` | RetroArch, Dolphin, PCSX2, gamescope |
 | `home/luke/cloud-sync.nix` | rclone sync module |
-| `home/luke/desktop/dms.nix` | DMS user-level service and config |
+| `home/luke/desktop/dms.nix` | DMS configuration (settings.json) and wallpaper service |
 | `home/luke/desktop/foot.nix` | Foot terminal |
 | `home/luke/desktop/qt.nix` | Qt6 theming |
 | `home/luke/desktop/spicetify.nix` | Spotify customization |
@@ -251,12 +243,6 @@ Every config file falls into one of three categories. This matters when bringing
 | `home/luke/desktop.nix` | `qemu` package only needed on desktop |
 | `hosts/desktop/default.nix` | AMD GPU, Intel AX210, storage mounts, Jellyfin, Home Assistant |
 | `hosts/desktop/hardware-configuration.nix` | Disk UUIDs, boot modules, CPU platform |
-
-### Arch-only
-
-| File | Why it's Arch-only |
-|------|---------------------|
-| `home/luke/desktop/arch-gl.nix` | GL driver path fixups for Nix-on-Arch |
 
 ### VM-only
 
@@ -309,14 +295,6 @@ PipeWire audio stack replacing PulseAudio:
 - ALSA (32-bit support), JACK emulation, PulseAudio emulation.
 - WirePlumber session manager.
 - pavucontrol GUI.
-
-### `modules/graphical/dms.nix`
-
-System-level Dank Material Shell configuration:
-
-- DMS enabled with systemd integration and auto-restart.
-- Features: system monitoring, VPN, dynamic theming, audio wavelength visualisation, calendar events, clipboard paste.
-- **Greeter:** DMS greeter using Hyprland as compositor, config home at `/home/luke`.
 
 ### `modules/graphical/fonts.nix`
 
@@ -519,40 +497,34 @@ The core window manager configuration.
 | `focus-window` | Focuses existing window by class, or launches app if not running. `-n` flag forces new instance |
 | `hypr-zoom` | Zoom in/out using `cursor:zoom_factor`. `hypr-zoom in [step]` / `hypr-zoom out` |
 
-**Activation script:** Creates DMS stub config files (`execs`, `general`, `keybinds`, `rules`, `cursor`) in `~/.config/hypr/dms/` so Hyprland can parse `source=` lines before DMS generates them.
+**Activation script:** Creates stub config files in `~/.config/hypr/dms/` and `~/.config/hypr/custom/` so Hyprland can parse `source=` lines before the real files exist.
 
-**Monitor:** `DP-1` at 2560x1440@164.06Hz, scale 2, VRR enabled. Fallback: preferred/auto. *(Host-specific — will need override on other machines.)*
+**Config structure:** Hyprland's `hyprland.conf` is a thin entry point that sources two directories in order:
 
-**Environment:**
+1. `~/.config/hypr/dms/` — DMS-managed configs (colors, outputs, layout, cursor, binds). DMS regenerates these; do not edit.
+2. `~/.config/hypr/custom/` — User overrides deployed by Home Manager. Sourced second, so they take precedence.
 
-| Variable | Value |
-|----------|-------|
-| `GTK_THEME` | `Adwaita-dark` |
-| `QT_QPA_PLATFORMTHEME` | `qt6ct` |
-| `NIXOS_OZONE_WL` | `1` |
+```
+~/.config/hypr/
+├── hyprland.conf              # Sources dms/ then custom/
+├── dms/                       # DMS-managed (do not edit)
+│   ├── binds.conf
+│   ├── colors.conf
+│   ├── cursor.conf
+│   ├── layout.conf
+│   └── outputs.conf
+└── custom/                    # User overrides (HM-managed)
+    ├── general.conf           # Env vars, gaps, decoration, blur, shadows, animations, misc, layout
+    ├── cursor.conf            # hide_on_key_press, no_warps
+    ├── binds.conf             # Unbinds DMS conflicts, then custom keybinds
+    └── rules.conf             # Window opacity, float rules, special workspace
+```
 
-**General layout:**
+**custom/general.conf** contains: monitor config (`DP-1, 2560x1440@164Hz`), env vars, dwindle layout (gaps 10/15, no border, rounding 12), blur, shadows, vertical slide animations, misc settings.
 
-- Dwindle layout with `preserve_split`.
-- Gaps: 10px inner, 15px outer.
-- Border size: 0 (borderless).
-- Rounding: 12px.
+**custom/binds.conf** starts with `unbind` lines to remove conflicting DMS defaults (SUPER+T, W, X, R, Tab, up/down, etc.), then defines custom binds. DMS spotlight toggled with Super key tap via `bindr`.
 
-**Decoration:**
-
-- Blur: enabled, size 2, 1 pass, vibrancy 0.2.
-- Shadows: enabled, range 40, render power 4, offset 0/5, color rgba(00000070).
-
-**Animations:**
-
-- Workspace transitions: vertical slide.
-- Special workspace: vertical slide from top.
-
-**Cursor:** Hidden on keypress, no warps.
-
-**Misc:** VRR on, no Hyprland logo/splash, ANR dialog disabled.
-
-**DMS integration:** Sources 5 config files from `~/.config/hypr/dms/` (execs, general, keybinds, rules, cursor). DMS spotlight toggled with Super key tap.
+**custom/rules.conf** defines opacity rules and app-specific float/workspace rules.
 
 ### `home/luke/desktop/hyprland-vm.nix`
 
@@ -564,11 +536,9 @@ VM overrides applied on top of the main Hyprland config:
 
 ### `home/luke/desktop/dms.nix`
 
-Dank Material Shell user-level service and runtime configuration:
+DMS configuration management. The DMS binary and service are installed natively on Arch; this file only manages configuration:
 
-- Settings loaded from `config/dms-settings.json`.
-- **Clipboard:** 25 items max, 5 MB per entry, auto-clear daily, clear at startup, persist disabled.
-- **dsearch** (app search) enabled.
+- Deploys `config/dms-settings.json` to `~/.config/DankMaterialShell/settings.json` via `home.file`.
 - **Random wallpaper service:** Runs before DMS starts, picks a random image from `~/Pictures/Wallpapers` and writes it into DMS `session.json`. Currently disabled (bootstrap handles wallpaper selection instead).
 
 ### `home/luke/desktop/foot.nix`
@@ -607,22 +577,6 @@ Qt6 theming via qt6ct:
 - **Color scheme:** DankMatugen (from DMS dynamic theming)
 - **Fonts:** Rubik (UI), JetBrainsMono Nerd Font (monospace)
 - **Platform theme:** qtct
-
-### `home/luke/desktop/arch-gl.nix`
-
-Fixes for running Nix-built graphical apps (DMS, QuickShell) on Arch Linux, where Nix's bundled Mesa lacks DRI drivers:
-
-**DMS service overrides:**
-
-| Setting | Purpose |
-|---------|---------|
-| `LIBGL_DRIVERS_PATH=/usr/lib/dri` | Use Arch's GL drivers |
-| `__EGL_VENDOR_LIBRARY_DIRS=/usr/share/glvnd/egl_vendor.d` | Use Arch's EGL vendor files |
-| `LD_LIBRARY_PATH=/usr/lib` | Link against Arch system libraries |
-
-- DMS bound to `hyprland-session.target` (not `graphical-session.target`) to ensure the Wayland socket exists.
-- Generous restart limits: 10 restarts within 60 seconds to survive logout/login gaps.
-- Same GL environment applied to the bootstrap service.
 
 ---
 
@@ -718,7 +672,7 @@ A first-login welcome experience:
 | `bootstrap` | Oneshot, runs after `graphical-session.target`, 10-minute timeout |
 | `lazy-wallpapers` | Downloads remaining wallpaper folders via git sparse-checkout after DMS starts |
 
-DMS and foot-autostart are ordered to start **after** bootstrap completes.
+foot-autostart is ordered to start **after** bootstrap completes. DMS (managed by Arch) starts independently; bootstrap creates suppression markers synchronously before DMS reads them.
 
 ### Cloud Sync (`home/luke/cloud-sync.nix`)
 
@@ -830,6 +784,8 @@ Available on all systems via `nix develop`:
 | `Super+Down` | Next workspace |
 | `Super+Shift+Up` | Move window to previous workspace |
 | `Super+Shift+Down` | Move window to next workspace |
+| `Super+Scroll` | Cycle through all workspaces |
+| `Super+Shift+Scroll` | Move window to adjacent workspace |
 
 #### Utilities
 
@@ -905,13 +861,9 @@ nix fmt    # runs nixfmt on the flake
 
 These are the fragile seams in the config — places where components depend on each other in non-obvious ways. When something breaks, check here first.
 
-### Arch GL ↔ Nix GUI apps
-
-`arch-gl.nix` injects `LIBGL_DRIVERS_PATH`, `__EGL_VENDOR_LIBRARY_DIRS`, and `LD_LIBRARY_PATH` into the DMS and bootstrap services so that Nix-built QuickShell/DMS can use Arch's GPU drivers. If Arch updates Mesa or moves driver paths, DMS will fail to render. Symptom: DMS crashes immediately on start, `journalctl --user -u dms` shows EGL/DRI errors.
-
 ### Hyprland ↔ monitor `DP-1`
 
-`hyprland.nix` hardcodes `DP-1,2560x1440@164.06,0x0,2,vrr,1`. On a different machine or if the GPU port changes, Hyprland will either pick the wrong output or fail to configure the display. The fallback line (`,preferred,auto,auto`) catches unknown monitors but at default settings. Override the `monitor` list for new hardware.
+`custom/general.conf` (deployed by `hyprland.nix`) hardcodes `DP-1,2560x1440@164.06,0x0,2,vrr,1`. DMS also writes `dms/outputs.conf` with monitor config. On a different machine or if the GPU port changes, override the monitor setting in the custom config or via DMS settings. The fallback line (`,preferred,auto,auto`) catches unknown monitors but at default settings.
 
 ### DMS ↔ Hyprland stub configs
 
@@ -919,11 +871,11 @@ Hyprland's config includes `source = ~/.config/hypr/dms/*.conf` for 5 files that
 
 ### DMS ↔ service ordering on Arch
 
-`arch-gl.nix` binds DMS to `hyprland-session.target` instead of `graphical-session.target` because the Wayland socket doesn't exist until Hyprland is fully started. On logout/login, the old socket vanishes before the new Hyprland is ready — the generous restart limits (10 within 60s) let DMS survive this gap. If DMS still fails after login cycling, check that `hyprland-session.target` is being activated.
+DMS is installed natively on Arch and manages its own systemd user service. It binds to `hyprland-session.target` — if the Wayland socket doesn't exist yet, DMS will fail to start. On logout/login, the old socket vanishes before the new Hyprland is ready; DMS's built-in restart limits handle this gap. If DMS fails after login cycling, check that `hyprland-session.target` is being activated and that DMS's service is enabled (`systemctl --user status dms`).
 
 ### Bootstrap → DMS → foot-autostart ordering
 
-On first login: `bootstrap.service` runs first (suppresses DMS onboarding, sets wallpaper, shows welcome UI). DMS and `foot-autostart` are ordered `After=bootstrap.service`. If bootstrap hangs or fails, DMS and foot won't start. The 10-minute timeout on bootstrap is the safety valve. After first login (`~/.local/state/bootstrap-done` exists), bootstrap is skipped via `ConditionPathExists`.
+On first login: `bootstrap.service` runs first (suppresses DMS onboarding, sets wallpaper, shows welcome UI). `foot-autostart` is ordered `After=bootstrap.service`. DMS starts independently via its own Arch-managed systemd service — bootstrap creates suppression markers synchronously before DMS reads them. If bootstrap hangs or fails, foot won't start (10-minute timeout is the safety valve). After first login (`~/.local/state/bootstrap-done` exists), bootstrap is skipped via `ConditionPathExists`.
 
 ### Foot ↔ DMS color generation
 
@@ -963,7 +915,7 @@ pacman -S pipewire pipewire-pulse pipewire-jack wireplumber
 # Networking
 pacman -S networkmanager
 
-# GL/EGL stack (needed by Nix-built DMS/QuickShell — usually already present)
+# GL/EGL stack (needed by QuickShell and other Nix-built graphical apps)
 pacman -S mesa libglvnd
 
 # Terminal and shell (Arch-side, used before HM activates)
@@ -999,7 +951,17 @@ Add user to required groups:
 usermod -aG wheel,docker,video,audio,networkmanager luke
 ```
 
-### 2. Install Nix
+### 2. Install DMS (Dank Material Shell)
+
+DMS provides the shell, panel, theming, and greeter layer on top of Hyprland. It's installed natively on Arch — Nix only manages its configuration.
+
+```bash
+curl -fsSL https://install.danklinux.com | sh
+```
+
+The installer sets up the DMS binary, systemd user service, greeter, and plugins. It will also write initial Hyprland config files into `~/.config/hypr/dms/`. After Home Manager activates, Nix will deploy `settings.json` and the custom Hyprland override files alongside the DMS-managed ones.
+
+### 3. Install Nix
 
 ```bash
 sh <(curl -L https://nixos.org/nix/install) --daemon
@@ -1011,7 +973,7 @@ Enable flakes in `/etc/nix/nix.conf`:
 experimental-features = nix-command flakes
 ```
 
-### 3. Clone and activate Home Manager
+### 4. Clone and activate Home Manager
 
 ```bash
 git clone <repo-url> ~/Source/lu-nix
@@ -1028,7 +990,7 @@ home-manager switch --flake .#luke
 # or use the 'hms' abbreviation once Fish is your active shell
 ```
 
-### 4. Configure greetd / session
+### 5. Configure greetd / session
 
 Configure greetd (or your login manager) to launch Hyprland for user `luke`. Example `/etc/greetd/config.toml`:
 
@@ -1043,14 +1005,14 @@ user = "greeter"
 
 Home Manager manages the Hyprland config but not the session launcher on Arch.
 
-### 5. Set up cloud sync
+### 6. Set up cloud sync
 
 ```bash
 cloud-sync-setup    # interactive — prompts for B2 application key
 cloud-sync          # initial pull of Documents + Pictures
 ```
 
-### 6. Validate
+### 7. Validate
 
 Run through the [Bring-Up Checklist](#bring-up-checklist) below.
 
@@ -1058,8 +1020,8 @@ Run through the [Bring-Up Checklist](#bring-up-checklist) below.
 
 These are easy to forget on a fresh machine:
 
-- Primary desktop monitor is `DP-1` — override in `hyprland.nix` if different
-- Arch provides GL/EGL drivers at `/usr/lib/dri` and `/usr/share/glvnd/egl_vendor.d`
+- Primary desktop monitor is `DP-1` — override in `custom/general.conf` (via `hyprland.nix`) if different
+- DMS must be installed natively on Arch before `home-manager switch` — Nix only deploys config
 - greetd or equivalent starts Hyprland — HM does not manage the login manager
 - `gh auth login` must be run before git credential helper works
 - VSCode and Zen expect `gnome-keyring` for `--password-store=gnome`
@@ -1100,7 +1062,7 @@ systemctl --user stop dms
 hyprctl dispatch exec foot   # get a terminal without DMS
 ```
 
-If you need to fully remove DMS from the Hyprland session (temporary debugging only — prefer fixing the declarative config and re-running `home-manager switch`; manual edits to generated config are overwritten on next switch):
+If you need to fully remove DMS from the Hyprland session (temporary debugging only — the `custom/` directory is managed by Home Manager, so manual edits there are overwritten on next switch; edit `dms/` files or `hyprland.conf` for temporary changes):
 
 ```bash
 # Back up the generated config, then strip DMS source lines

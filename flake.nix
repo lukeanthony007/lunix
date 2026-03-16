@@ -11,30 +11,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    dms = {
-      url = "github:AvengeMedia/DankMaterialShell/stable";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    dms-plugin-registry = {
-      url = "github:AvengeMedia/dms-plugin-registry";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    danksearch = {
-      url = "github:AvengeMedia/danksearch";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    spicetify-nix = {
-      url = "github:Gerg-L/spicetify-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+
   };
 
   outputs = inputs@{
@@ -125,10 +107,6 @@
       nodejs = mkNodejs pkgs;
 
       homeModulesShared = [
-        inputs.dms.homeModules.dank-material-shell
-        inputs.dms-plugin-registry.modules.default
-        inputs.danksearch.homeModules.dsearch
-        inputs.spicetify-nix.homeManagerModules.default
         inputs.zen-browser.homeModules.beta
       ];
 
@@ -141,8 +119,6 @@
           };
 
           modules = [
-            inputs.dms.nixosModules.dank-material-shell
-            inputs.dms.nixosModules.greeter
             home-manager.nixosModules.home-manager
             path
             {
@@ -170,7 +146,6 @@
         modules = homeModulesShared ++ [
           ./home/luke
           ./home/luke/desktop.nix
-          ./home/luke/desktop/arch-gl.nix
           ./home/luke/gaming.nix
           ./home/luke/productivity.nix
         ];

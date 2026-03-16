@@ -8,7 +8,7 @@
     ./desktop/hyprland.nix
     ./desktop/qt.nix
     ./desktop/settings.nix
-    ./desktop/spicetify.nix
+
     ./desktop/vscode.nix
     ./desktop/zen.nix
   ];

@@ -511,7 +511,7 @@ use flake
 That means your daily flow becomes:
 
 ```bash
-cd ~/Source/personal/amio
+cd ~/Source/infra/raia
 just launch
 just test
 ```
@@ -1019,17 +1019,20 @@ But do not start there. Start simple.
 ```text
 ~/Source/
   personal/
-    lu-nix/
-    amio/
-    raia/
     graphite/
   research/
     evals/
     benchmarks/
     papers/
   infra/
-    homelab/
-    deploy/
+    lu-nix/
+    raia/
+    aether/
+    anima/
+    mana/
+    materia/
+    mythra/
+    nayru/
   experiments/
     quickshell-lab/
     rust-playgrounds/
