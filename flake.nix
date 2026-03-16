@@ -136,8 +136,14 @@
         };
       # --- Raia appliance packages ---
 
-      # raia-core stub for boot-path validation
+      # raia-core stub for boot-path validation (fallback when real core unavailable)
       raia-core-stub = import ./packages/raia-core-stub.nix { inherit pkgs; };
+
+      # Real raia-shell built from source (requires --impure)
+      raia-shell-pkg = import ./packages/raia-shell.nix { inherit pkgs; };
+
+      # Real raia-core wrapped from pre-built binary (requires --impure)
+      raia-core-pkg = import ./packages/raia-core.nix { inherit pkgs; };
 
       # Appliance host builder — separate from mkHost because it needs
       # different specialArgs and does not include zen-browser or DMS.
@@ -205,7 +211,13 @@
         ];
       };
 
-      # Raia continuity appliance (stub core for boot-path validation)
+      # Raia continuity appliance — stub core (for eval/CI, no --impure needed)
       nixosConfigurations.appliance = mkAppliance {};
+
+      # Raia continuity appliance — real runtime (requires --impure)
+      nixosConfigurations.appliance-real = mkAppliance {
+        raia-core-command = "${raia-core-pkg}/bin/raia-core";
+        raia-shell-package = raia-shell-pkg;
+      };
     });
 }

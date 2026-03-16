@@ -22,17 +22,42 @@ vm-run-persist: vm-build
 vm-run-serial: vm-build
   just _vm-exec -s -- -serial mon:stdio
 
-# === Raia Appliance ===
+# === Raia Appliance (stub — for eval/CI) ===
 
-# Build the appliance VM image
-appliance-build:
+# Build the stub appliance VM image
+appliance-build-stub:
   nix build .#nixosConfigurations.appliance.config.system.build.vm
+
+# Validate the stub appliance profile evaluates without errors
+appliance-check:
+  nix eval .#nixosConfigurations.appliance.config.system.build.toplevel --apply builtins.seq --raw 2>&1 | head -5 || true
+  @echo "appliance profile evaluated"
+
+# === Raia Appliance (real runtime) ===
+
+# Build raia-shell from source
+raia-shell-build:
+  cd ../raia && cargo build -p raia-shell --release
+  @echo "raia-shell built: ../raia/target/release/raia-shell"
+
+# Build raia-core binary (Bun compile)
+raia-core-build:
+  cd ../raia && bun install --ignore-scripts 2>/dev/null; bun build --compile src/raia-app/src-tauri/scripts/core-entry.ts --outfile build/bin/raia-core
+  @echo "raia-core built: ../raia/build/bin/raia-core"
+
+# Build both raia binaries
+raia-build: raia-shell-build raia-core-build
+
+# Build the real appliance VM image (requires --impure for local source paths)
+appliance-build: raia-build
+  nix build .#nixosConfigurations.appliance-real.config.system.build.vm --impure
+  @echo "real appliance VM built"
 
 # Helper to run the appliance VM (uses system QEMU for GL)
 _appliance-exec *ARGS:
   sed "s|/nix/store/[^/]*/bin/qemu-system-x86_64|qemu-system-x86_64|" ./result/bin/run-*-vm | bash {{ARGS}}
 
-# Run the appliance VM with a fresh disk
+# Run the real appliance VM with a fresh disk
 appliance-run: appliance-build
   rm -f raia-appliance.qcow2
   just _appliance-exec
@@ -44,17 +69,3 @@ appliance-run-persist: appliance-build
 # Run the appliance VM with serial console for debugging
 appliance-run-serial: appliance-build
   just _appliance-exec -s -- -serial mon:stdio
-
-# Validate the appliance profile evaluates without errors
-appliance-check:
-  nix eval .#nixosConfigurations.appliance.config.system.build.toplevel --apply builtins.seq --raw 2>&1 | head -5 || true
-  @echo "appliance profile evaluated"
-
-# Build raia-shell from source (run from raia workspace)
-raia-shell-build:
-  cd ../raia && cargo build -p raia-shell --release
-  @echo "raia-shell built: ../raia/target/release/raia-shell"
-
-# Full appliance build: build raia binaries, then build VM
-appliance-full: raia-shell-build appliance-build
-  @echo "appliance VM ready — run: just appliance-run"

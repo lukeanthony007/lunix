@@ -3,15 +3,23 @@
 let
   cfg = config.services.raia-core;
 
-  # Readiness check script — polls /health/ready until 200 or timeout
+  # Readiness check script — polls /health/ready until 200 or timeout.
+  # Logs state transitions for journal inspection.
   readinessCheck = pkgs.writeShellScript "raia-core-ready" ''
     URL="http://127.0.0.1:${toString cfg.port}/health/ready"
     TIMEOUT=''${1:-60}
     ELAPSED=0
+    LAST_STATUS=""
     while [ "$ELAPSED" -lt "$TIMEOUT" ]; do
       STATUS=$(${pkgs.curl}/bin/curl -s -o /dev/null -w "%{http_code}" "$URL" 2>/dev/null || echo "000")
       if [ "$STATUS" = "200" ]; then
+        BODY=$(${pkgs.curl}/bin/curl -s "$URL" 2>/dev/null)
+        echo "raia-core ready after ''${ELAPSED}s ($BODY)"
         exit 0
+      fi
+      if [ "$STATUS" != "$LAST_STATUS" ]; then
+        echo "raia-core: waiting (status=$STATUS, elapsed=''${ELAPSED}s)" >&2
+        LAST_STATUS="$STATUS"
       fi
       sleep 1
       ELAPSED=$((ELAPSED + 1))
@@ -107,11 +115,10 @@ JSON
 
   # Wrapper script that starts raia-core
   coreStartScript = pkgs.writeShellScript "raia-core-start" ''
-    export PATH="${lib.makeBinPath (with pkgs; [ coreutils cfg.nodePackage ])}:$PATH"
+    export PATH="${lib.makeBinPath (with pkgs; [ coreutils ])}:$PATH"
     export HOME="${cfg.home}"
     export RAIA_COGNITION_PORT="${toString cfg.port}"
-
-    RAIA_HOME="''${HOME}/.raia"
+    export RAIA_HOME="${cfg.home}/.raia"
 
     # Check provisioning state
     if [ ! -f "$RAIA_HOME/.provisioned" ]; then
@@ -132,6 +139,8 @@ JSON
     export RAIA_EMBODIMENT="appliance"
     export RAIA_ENVIRONMENT="production"
     export RAIA_TRUST_TIER="established"
+
+    echo "raia-core: starting (port=$RAIA_COGNITION_PORT, home=$RAIA_HOME)"
 
     # Start the core server
     exec ${cfg.coreCommand}
@@ -159,12 +168,6 @@ in
       description = "User to run raia-core as";
     };
 
-    nodePackage = lib.mkOption {
-      type = lib.types.package;
-      default = pkgs.nodejs_24 or pkgs.nodejs;
-      description = "Node.js package for running raia-core";
-    };
-
     coreCommand = lib.mkOption {
       type = lib.types.str;
       description = "Command to start the raia-core server process";
@@ -188,11 +191,12 @@ in
         User = cfg.user;
         Group = "users";
         ExecStart = coreStartScript;
-        ExecStartPost = "${readinessCheck} 30";
+        ExecStartPost = "${readinessCheck} 60";
+        TimeoutStartSec = 90;
         Restart = "on-failure";
         RestartSec = 5;
         StartLimitBurst = 5;
-        StartLimitIntervalSec = 60;
+        StartLimitIntervalSec = 120;
 
         # Hardening
         ProtectSystem = "strict";
