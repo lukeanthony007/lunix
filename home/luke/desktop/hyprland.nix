@@ -1,14 +1,8 @@
 { pkgs, lib, ... }:
 let
-  # Kill active window — pkill apps that ignore WM close (e.g. Spotify)
+  # Kill active window
   hypr-kill = pkgs.writeShellScriptBin "hypr-kill" ''
-    CLASS=$(hyprctl activewindow -j | ${pkgs.jq}/bin/jq -r '.class')
-    case "$CLASS" in
-      Spotify|spotify)
-        pkill -x spotify ;;
-      *)
-        hyprctl dispatch killactive ;;
-    esac
+    hyprctl dispatch killactive
   '';
 
   # Focus-or-launch: focuses existing window by class, or launches it
@@ -100,7 +94,6 @@ in
 
   home.file.".config/hypr/custom/general.conf".text = ''
     # Environment
-    env = GTK_THEME,Adwaita-dark
     env = QT_QPA_PLATFORMTHEME,qt6ct
     env = NIXOS_OZONE_WL,1
 
@@ -198,7 +191,7 @@ in
     bind = $mod, Return, exec, focus-window foot
     bind = $mod, T, exec, focus-window foot
     bind = $mod, C, exec, focus-window code --password-store=gnome --enable-features=UseOzonePlatform --ozone-platform=wayland
-    bind = $mod, E, exec, focus-window thunar
+    bind = $mod, E, exec, focus-window nautilus
     bind = $mod, W, exec, focus-window zen-beta -P Personal
     bind = $mod, O, exec, focus-window obsidian --password-store=gnome --enable-features=UseOzonePlatform --ozone-platform=wayland
     bind = $mod, D, exec, focus-window discord --enable-features=WaylandWindowDecorations --ozone-platform-hint=auto
@@ -209,7 +202,7 @@ in
     # Force new window
     bind = $mod SHIFT, Return, exec, focus-window -n foot
     bind = $mod SHIFT, C, exec, focus-window -n code --password-store=gnome --enable-features=UseOzonePlatform --ozone-platform=wayland
-    bind = $mod SHIFT, E, exec, focus-window -n thunar
+    bind = $mod SHIFT, E, exec, focus-window -n nautilus
     bind = $mod SHIFT, W, exec, focus-window -n zen-beta -P Personal
 
     # Window management
@@ -270,9 +263,8 @@ in
       opacity = 0.95 override 0.95 override 1.0 override
     }
     windowrule {
-      name = opacity-thunar
-      match:class = thunar
-      match:class = Thunar
+      name = opacity-nautilus
+      match:class = org.gnome.Nautilus
       opacity = 0.95 override 0.95 override 1.0 override
     }
     windowrule {
