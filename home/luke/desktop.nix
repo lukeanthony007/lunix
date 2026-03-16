@@ -23,7 +23,8 @@
     imv
     gnome-text-editor
     mpv
-    nautilus
+    xfce.thunar
+    adw-gtk3
     nerd-fonts.jetbrains-mono
     p7zip
     pavucontrol
@@ -49,6 +50,7 @@
       "image/jpeg" = "org.gnome.Loupe.desktop";
       "application/toml" = "code.desktop";
       "text/x-sh" = "code.desktop";
+      "inode/directory" = "thunar.desktop";
       "x-scheme-handler/discord" = "vesktop.desktop";
     };
   };
@@ -67,8 +69,8 @@
   gtk = {
     enable = true;
     theme = {
-      name = "Adwaita-dark";
-      package = pkgs.adwaita-icon-theme;
+      name = "adw-gtk3-dark";
+      package = pkgs.adw-gtk3;
     };
   };
 

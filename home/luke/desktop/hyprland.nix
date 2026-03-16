@@ -156,7 +156,7 @@ in
       bind = $mod, Return, exec, focus-window foot
       bind = $mod, T, exec, focus-window foot
       bind = $mod, C, exec, focus-window code --password-store=gnome --enable-features=UseOzonePlatform --ozone-platform=wayland
-      bind = $mod, E, exec, focus-window nautilus
+      bind = $mod, E, exec, focus-window thunar
       bind = $mod, W, exec, focus-window zen-beta -P Personal
       bind = $mod, O, exec, focus-window obsidian --password-store=gnome --enable-features=UseOzonePlatform --ozone-platform=wayland
       bind = $mod, D, exec, focus-window discord --enable-features=WaylandWindowDecorations --ozone-platform-hint=auto
@@ -167,7 +167,7 @@ in
       # Force new window
       bind = $mod SHIFT, Return, exec, focus-window -n foot
       bind = $mod SHIFT, C, exec, focus-window -n code --password-store=gnome --enable-features=UseOzonePlatform --ozone-platform=wayland
-      bind = $mod SHIFT, E, exec, focus-window -n nautilus
+      bind = $mod SHIFT, E, exec, focus-window -n thunar
       bind = $mod SHIFT, W, exec, focus-window -n zen-beta -P Personal
 
       # Window management
@@ -220,9 +220,10 @@ in
         opacity = 0.95 override 0.95 override 1.0 override
       }
       windowrule {
-        name = opacity-nautilus
-        match:class = org.gnome.Nautilus
-        opacity = 0.75 override 0.75 override 1.0 override
+        name = opacity-thunar
+        match:class = thunar
+        match:class = Thunar
+        opacity = 0.95 override 0.95 override 1.0 override
       }
       windowrule {
         name = opacity-editors
