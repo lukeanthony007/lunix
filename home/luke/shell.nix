@@ -3,6 +3,9 @@
   home.packages = with pkgs; [
     bat
     eza
+    fd
+    fzf
+    ripgrep
   ];
 
   home.sessionVariables = {
@@ -13,22 +16,51 @@
     NATIVE_WAYLAND = "1";
   };
 
+  home.sessionPath = [
+    "$HOME/.bun/bin"
+  ];
+
   programs.fish = {
     enable = true;
+
     interactiveShellInit = ''
       set fish_greeting
     '';
-    functions.fish_prompt = ''
-      # Override pure theme's fish_prompt to fix cursor position in VSCode/Cursor
-      set --local exit_code $status
 
-      _pure_print_prompt_rows
-      _pure_place_iterm2_prompt_mark
-      echo -e -n (_pure_prompt $exit_code)
-      echo -e -n (_pure_prompt_ending)
+    shellAbbrs = {
+      gs = "git status";
+      gd = "git diff";
+      ga = "git add";
+      gc = "git commit";
+      gp = "git push";
+      gl = "git log --oneline";
+      gco = "git checkout";
 
-      set _pure_fresh_session false
-    '';
+      ls = "eza";
+      ll = "eza -la";
+      lt = "eza --tree --level=2";
+      cat = "bat";
+
+      hms = "home-manager switch --flake .";
+    };
+
+    plugins = [
+      { name = "fzf-fish"; src = pkgs.fishPlugins.fzf-fish.src; }
+      { name = "autopair"; src = pkgs.fishPlugins.autopair.src; }
+      { name = "done"; src = pkgs.fishPlugins.done.src; }
+      { name = "sponge"; src = pkgs.fishPlugins.sponge.src; }
+      { name = "puffer"; src = pkgs.fishPlugins.puffer.src; }
+    ];
+  };
+
+  programs.fzf = {
+    enable = true;
+    enableFishIntegration = false; # fzf-fish plugin handles this
+  };
+
+  programs.zoxide = {
+    enable = true;
+    enableFishIntegration = true;
   };
 
   programs.starship = {

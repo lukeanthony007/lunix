@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, ... }:
 {
   home.packages = with pkgs; [
     deluge-gtk
@@ -7,11 +7,4 @@
     signal-desktop
     zoom-us
   ];
-
-  programs.spicetify = {
-    enable = true;
-    enabledExtensions = with inputs.spicetify-nix.legacyPackages.${pkgs.system}.extensions; [
-      adblock
-    ];
-  };
 }
