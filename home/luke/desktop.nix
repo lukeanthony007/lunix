@@ -81,6 +81,8 @@
       { remote = "Pictures";  local = "Pictures"; }
       { remote = "Desktop";   local = "Desktop"; }
       { remote = "Music";     local = "Music"; }
+      { remote = "Downloads"; local = "Downloads"; }
+      { remote = "Data";      local = "Data"; }
     ];
   };
 }
