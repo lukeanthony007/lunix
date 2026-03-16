@@ -46,7 +46,7 @@
 
   systemd.user.services.foot-autostart = {
     Unit = {
-      After = ["graphical-session.target" "dms.service"];
+      After = ["hyprland-session.target" "dms.service"];
       Description = "Launch foot on session start";
       PartOf = ["graphical-session.target"];
     };

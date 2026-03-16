@@ -17,6 +17,7 @@
     claude-code
     codex
     fastfetch
+    foot
     imv
     gnome-text-editor
     mpv

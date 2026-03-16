@@ -96,7 +96,11 @@ in
         vrr = 1;
         enable_anr_dialog = false;
         disable_hyprland_logo = true;
+        disable_splash_rendering = true;
       };
+
+      dwindle.preserve_split = true;
+      master.mfact = 0.5;
 
       # --- Decoration ---
       decoration = {
@@ -144,10 +148,9 @@ in
       bind = $mod, T, exec, focus-window foot
       bind = $mod, C, exec, focus-window code --password-store=gnome --enable-features=UseOzonePlatform --ozone-platform=wayland
       bind = $mod, E, exec, focus-window nautilus
-      bind = $mod, W, exec, focus-window zen-browser -P Personal
+      bind = $mod, W, exec, focus-window zen-beta -P Personal
       bind = $mod, O, exec, focus-window obsidian --password-store=gnome --enable-features=UseOzonePlatform --ozone-platform=wayland
       bind = $mod, D, exec, focus-window discord --enable-features=WaylandWindowDecorations --ozone-platform-hint=auto
-      bind = $mod, B, exec, focus-window obs
       bind = $mod, G, exec, focus-window steam --enable-features=WaylandWindowDecorations --ozone-platform-hint=auto
       bind = $mod, R, exec, focus-window retroarch
       bind = $mod, S, exec, focus-window spotify
@@ -217,11 +220,6 @@ in
         match:class = cursor
         match:class = windsurf
         opacity = 0.9 override 0.9 override 1.0 override
-      }
-      windowrule {
-        name = opacity-kitty
-        match:class = kitty
-        opacity = 0.85 override 0.85 override 1.0 override
       }
       windowrule {
         name = opacity-easyeffects
