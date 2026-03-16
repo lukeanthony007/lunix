@@ -1,0 +1,18 @@
+{ ... }:
+{
+  programs.zen-browser = {
+    enable = true;
+    policies = {
+      ExtensionSettings = {
+        "uBlock0@raymondhill.net" = {
+          installation_mode = "normal_installed";
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi";
+        };
+        "addon@darkreader.org" = {
+          installation_mode = "normal_installed";
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/darkreader/latest.xpi";
+        };
+      };
+    };
+  };
+}

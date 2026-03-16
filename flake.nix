@@ -129,6 +129,7 @@
         inputs.dms-plugin-registry.modules.default
         inputs.danksearch.homeModules.dsearch
         inputs.spicetify-nix.homeManagerModules.default
+        inputs.zen-browser.homeModules.beta
       ];
 
       mkHost = { path, homeModules ? [] }:

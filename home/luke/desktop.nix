@@ -8,6 +8,7 @@
     ./desktop/hyprland.nix
     ./desktop/settings.nix
     ./desktop/vscode.nix
+    ./desktop/zen.nix
   ];
 
   home.packages = with pkgs; [
@@ -17,7 +18,6 @@
     codex
     fastfetch
     imv
-    inputs.zen-browser.packages.${pkgs.system}.default
     gnome-text-editor
     mpv
     nautilus

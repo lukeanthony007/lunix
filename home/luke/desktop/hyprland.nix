@@ -166,7 +166,6 @@ in
       bind = $mod, GRAVE, togglespecialworkspace
       bind = $mod SHIFT, GRAVE, movetoworkspace, special
       bind = $mod Alt, Space, togglefloating
-      bind = $mod, Q, killactive
       bind = Alt, F4, exec, hypr-kill
       bind = $mod, X, exec, hypr-kill
 
@@ -175,10 +174,7 @@ in
       bind = $mod, down, workspace, +1
       bind = $mod SHIFT, up, movetoworkspace, -1
       bind = $mod SHIFT, down, movetoworkspace, +1
-      bind = $mod, mouse_up, workspace, +1
-      bind = $mod, mouse_down, workspace, -1
-      bind = $mod SHIFT, mouse_up, movetoworkspace, +1
-      bind = $mod SHIFT, mouse_down, movetoworkspace, -1
+      # mouse_up/mouse_down and numbered workspaces are in dms/keybinds.conf
 
       # Opacity
       bind = CTRL $mod, bracketleft, exec, hyprctl dispatch setprop active opacity 0.05-
