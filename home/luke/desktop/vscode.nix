@@ -6,7 +6,30 @@
 
     profiles.default = {
       extensions = with pkgs.vscode-extensions; [
-        anthropic.claude-code
+        (anthropic.claude-code.overrideAttrs (old: {
+          postInstall = (old.postInstall or "") + ''
+            # The extension resolves resources/native-binary/claude and passes it
+            # to Node as a script. The Nix wrapper is a bash script, which causes
+            # SyntaxError. Replace the symlink with a thin JS shim.
+            native="$out/share/vscode/extensions/anthropic.claude-code/resources/native-binary/claude"
+            if [ -L "$native" ] || [ -f "$native" ]; then
+              rm "$native"
+              cat > "$native" << 'SHIM'
+#!/usr/bin/env node
+process.env.DISABLE_AUTOUPDATER = '1';
+process.env.FORCE_AUTOUPDATE_PLUGINS ??= '1';
+process.env.DISABLE_INSTALLATION_CHECKS = '1';
+delete process.env.DEV;
+SHIM
+              cat >> "$native" <<EOF
+const bins = ['${pkgs.socat}/bin', '${pkgs.bubblewrap}/bin', '${pkgs.procps}/bin'];
+process.env.PATH = [...bins, process.env.PATH].filter(Boolean).join(':');
+await import('${pkgs.claude-code}/lib/node_modules/@anthropic-ai/claude-code/cli.js');
+EOF
+              chmod +x "$native"
+            fi
+          '';
+        }))
         jnoortheen.nix-ide
         skellock.just
         tamasfe.even-better-toml
@@ -146,6 +169,9 @@
           "python" "javascript" "typescript"
           "react-typescript" "react-javascript"
         ];
+
+        # Claude - use local harness build
+        # "claudeCode.claudeProcessWrapper" = "/home/luke/Source/repos/agentic/harness/claude-code/dist/cli.mjs";
       };
     };
   };

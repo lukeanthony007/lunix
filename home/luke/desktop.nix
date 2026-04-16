@@ -1,4 +1,30 @@
 { inputs, pkgs, ... }:
+let
+  # The VS Code extension resolves `claude` on PATH and tries to import() it
+  # as a Node.js ES module. The standard Nix wrapper is a bash script, which
+  # causes a SyntaxError. This derivation replaces bin/claude with a thin JS
+  # shim that sets the same env vars and then loads the real entrypoint.
+  claude-code-vscode = pkgs.symlinkJoin {
+    name = "claude-code-vscode-${pkgs.claude-code.version}";
+    paths = [ pkgs.claude-code ];
+    postBuild = ''
+      rm $out/bin/claude $out/bin/.claude-wrapped
+      cat > $out/bin/claude << 'SHIM'
+#!/usr/bin/env node
+process.env.DISABLE_AUTOUPDATER = '1';
+process.env.FORCE_AUTOUPDATE_PLUGINS ??= '1';
+process.env.DISABLE_INSTALLATION_CHECKS = '1';
+delete process.env.DEV;
+SHIM
+      cat >> $out/bin/claude <<EOF
+const bins = ['${pkgs.socat}/bin', '${pkgs.bubblewrap}/bin', '${pkgs.procps}/bin'];
+process.env.PATH = [...bins, process.env.PATH].filter(Boolean).join(':');
+await import('${pkgs.claude-code}/lib/node_modules/@anthropic-ai/claude-code/cli.js');
+EOF
+      chmod +x $out/bin/claude
+    '';
+  };
+in
 {
   imports = [
     ./bootstrap.nix
@@ -16,7 +42,7 @@
   home.packages = with pkgs; [
     btop
     bun
-    claude-code
+    claude-code-vscode
     codex
     fastfetch
     foot
