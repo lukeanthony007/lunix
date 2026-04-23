@@ -450,7 +450,7 @@
       "enabled": true,
       "position": 2,
       "exclusiveZone": -15,
-      "spacing": 5,
+      "spacing": 0,
       "screenPreferences": [
         "all"
       ],
@@ -486,13 +486,9 @@
           "enabled": true
         },
         {
-          "id": "systemUpdate",
-          "enabled": true
-        },
-        {
           "id": "spacer",
           "enabled": true,
-          "size": 15
+          "size": 20
         }
       ],
       "innerPadding": -8,
@@ -531,7 +527,7 @@
       "enabled": true,
       "position": 3,
       "exclusiveZone": -15,
-      "spacing": 5,
+      "spacing": 0,
       "screenPreferences": [
         "all"
       ],
